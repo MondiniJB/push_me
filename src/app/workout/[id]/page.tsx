@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState, useMemo, Suspense } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -14,15 +14,30 @@ import {
   Clock,
   Layers,
   Dumbbell,
+  RotateCcw,
+  Trophy,
+  Activity,
+  Calendar,
+  Moon,
+  Droplets,
+  HeartPulse,
+  Zap,
+  Check,
+  Circle,
+  Scale,
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { triggerConfetti, triggerHaptic } from '@/lib/utils';
 import { getProgressionSuggestion } from '@/lib/progressionEngine';
 
-export default function ActiveWorkoutPage() {
+function WorkoutDetailInner() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
   const dayId = (params?.id as string) || 'lunes';
+  const dateParam = searchParams?.get('date');
+  const logIdParam = searchParams?.get('logId');
 
   const {
     activeWorkout,
@@ -33,13 +48,39 @@ export default function ActiveWorkoutPage() {
     finishWorkout,
     workoutLogs,
     routineDays,
-    cancelWorkout,
+    nutrition,
+    supplements,
+    recoveryLog,
+    cardioLogs,
+    mobilityItems,
   } = useAppStore();
 
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
 
   const routineDay = routineDays.find((d) => d.id === dayId) || routineDays[0];
   const isWorkoutActiveForThisDay = activeWorkout && activeWorkout.dayId === dayId;
+
+  // Find the exact target log by logId, or by date, or fallback to latest for this dayId
+  const completedLog = useMemo(() => {
+    if (logIdParam) {
+      const found = workoutLogs.find((l) => l.id === logIdParam);
+      if (found) return found;
+    }
+    if (dateParam) {
+      const found = workoutLogs.find((l) => l.date === dateParam && l.dayId === dayId);
+      if (found) return found;
+      const dateAny = workoutLogs.find((l) => l.date === dateParam);
+      if (dateAny) return dateAny;
+    }
+    return workoutLogs.find((l) => l.dayId === dayId && l.totalSetsCompleted > 0);
+  }, [workoutLogs, dayId, dateParam, logIdParam]);
+
+  const targetDateStr = completedLog?.date || dateParam || new Date().toISOString().split('T')[0];
+
+  const formattedDateLabel = useMemo(() => {
+    const d = new Date(targetDateStr + 'T12:00:00');
+    return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }, [targetDateStr]);
 
   const toggleTechnicalNotes = (exId: string) => {
     triggerHaptic('light');
@@ -50,10 +91,314 @@ export default function ActiveWorkoutPage() {
     triggerHaptic('success');
     triggerConfetti();
     finishWorkout();
-    router.push('/');
+    router.push('/routines');
   };
 
-  // If workout is NOT active for this day, render pre-workout launch screen
+  const handleStartWorkout = () => {
+    triggerHaptic('medium');
+    startWorkout(routineDay.id);
+  };
+
+  // Find cardio logged on this target date
+  const cardioOnTargetDate = useMemo(() => {
+    return cardioLogs.filter((c) => c.date === targetDateStr);
+  }, [cardioLogs, targetDateStr]);
+
+  // -------------------------------------------------------------
+  // VIEW 1: COMPLETED WORKOUT & FULL DAILY REPORT PER DATE
+  // Rendered when workout is not active, but HAS a completed log or date parameter
+  // -------------------------------------------------------------
+  if (!isWorkoutActiveForThisDay && completedLog) {
+    return (
+      <div className="space-y-6 pb-28 pt-2">
+        {/* Header Navigation */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                triggerHaptic('light');
+                router.back();
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-zinc-300 hover:bg-zinc-800 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div>
+              <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-emerald-400">
+                <CheckCircle2 className="h-3 w-3" /> INFORME COMPLETO DEL DÍA
+              </span>
+              <h1 className="text-xl font-black text-white">{completedLog.title || routineDay.title}</h1>
+            </div>
+          </div>
+
+          <button
+            onClick={handleStartWorkout}
+            className="flex items-center gap-1.5 rounded-2xl bg-orange-500 px-3.5 py-2 text-xs font-black text-zinc-950 shadow-md shadow-orange-500/20 hover:bg-orange-400 touch-press"
+          >
+            <RotateCcw className="h-4 w-4" /> Repetir
+          </button>
+        </div>
+
+        {/* Hero Performance Summary Card */}
+        <section className="glass-panel space-y-4 rounded-3xl border border-emerald-500/30 bg-emerald-500/5 p-5 shadow-2xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-emerald-400" />
+              <span className="text-xs font-bold text-zinc-200 capitalize">
+                {formattedDateLabel}
+              </span>
+            </div>
+            <span className="rounded-xl bg-emerald-500/20 px-2.5 py-1 text-xs font-bold text-emerald-400 border border-emerald-500/30">
+              ✓ Registrado
+            </span>
+          </div>
+
+          {/* 4 Workout KPIs Grid */}
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-3.5">
+              <span className="text-[10px] font-bold text-zinc-400">TIEMPO TOTAL</span>
+              <p className="text-xl font-black text-white mt-1">{completedLog.durationMinutes} min</p>
+            </div>
+
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-3.5">
+              <span className="text-[10px] font-bold text-zinc-400">VOLUMEN TOTAL</span>
+              <p className="text-xl font-black text-orange-400 mt-1">{completedLog.totalVolumeKg} kg</p>
+            </div>
+
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-3.5">
+              <span className="text-[10px] font-bold text-zinc-400">SERIES COMPLETADAS</span>
+              <p className="text-xl font-black text-white mt-1">{completedLog.totalSetsCompleted} sets</p>
+            </div>
+
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-3.5">
+              <span className="text-[10px] font-bold text-zinc-400">EJERCICIOS</span>
+              <p className="text-xl font-black text-emerald-400 mt-1">{completedLog.exercises.length} ejercicios</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Detailed Exercises Breakdown */}
+        <section className="space-y-4">
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">1. Desglose de Ejercicios Realizados</h3>
+
+          {completedLog.exercises.map((item, idx) => (
+            <div key={item.exerciseId || idx} className="glass-panel space-y-3 rounded-3xl border border-zinc-800 p-4 shadow-lg">
+              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-zinc-900 text-xs font-black text-emerald-400 border border-zinc-800">
+                    {idx + 1}
+                  </span>
+                  <div>
+                    <h4 className="text-sm font-extrabold text-white">{item.exerciseName}</h4>
+                    <span className="text-[10px] text-zinc-400">
+                      {item.sets.filter((s) => s.completed).length} series completadas
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Table of Logged Sets */}
+              <div className="space-y-1.5">
+                <div className="grid grid-cols-12 text-[10px] font-bold uppercase text-zinc-500 px-2">
+                  <span className="col-span-3">SERIE</span>
+                  <span className="col-span-3 text-center">PESO</span>
+                  <span className="col-span-3 text-center">REPS</span>
+                  <span className="col-span-3 text-right">ESTADO</span>
+                </div>
+
+                {item.sets.map((set, sIdx) => (
+                  <div
+                    key={set.id || sIdx}
+                    className="grid grid-cols-12 items-center gap-1 rounded-2xl bg-zinc-900/60 p-2.5 border border-zinc-800/80 text-xs"
+                  >
+                    <div className="col-span-3 flex items-center gap-1.5 font-bold text-zinc-300">
+                      <span>Set {set.setNumber}</span>
+                      {set.isPR && (
+                        <span className="flex items-center gap-0.5 rounded-md bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-black text-amber-400 border border-amber-500/30">
+                          <Trophy className="h-2.5 w-2.5" /> PR
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="col-span-3 text-center font-black text-white font-mono">
+                      {set.weight} kg
+                    </div>
+
+                    <div className="col-span-3 text-center font-black text-white font-mono">
+                      {set.reps} reps
+                    </div>
+
+                    <div className="col-span-3 flex justify-end">
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                        <CheckCircle2 className="h-4 w-4" /> Listo
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+
+        {/* SECTION 2: NUTRICIÓN & HIDRATACIÓN DE LA FECHA */}
+        <section className="space-y-3">
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">2. Nutrición & Hidratación de la Fecha</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {/* Water card */}
+            <div className="glass-panel flex flex-col justify-between rounded-2xl p-4 border border-zinc-800">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-zinc-400">AGUA DIARIA</span>
+                <Droplets className="h-4 w-4 text-cyan-400" />
+              </div>
+              <div className="my-2">
+                <span className="text-xl font-black text-white">{nutrition.waterLiters}L</span>
+                <p className="text-[10px] text-zinc-400 mt-0.5">Meta: {nutrition.targetWaterLiters}L</p>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-zinc-900 overflow-hidden">
+                <div
+                  className="h-full bg-cyan-400 rounded-full"
+                  style={{ width: `${Math.min(100, (nutrition.waterLiters / nutrition.targetWaterLiters) * 100)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Protein card */}
+            <div className="glass-panel flex flex-col justify-between rounded-2xl p-4 border border-zinc-800">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-zinc-400">PROTEÍNA DIARIA</span>
+                <Activity className="h-4 w-4 text-teal-400" />
+              </div>
+              <div className="my-2">
+                <span className="text-xl font-black text-white">{nutrition.protein}g</span>
+                <p className="text-[10px] text-zinc-400 mt-0.5">Meta: {nutrition.targetProtein}g</p>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-zinc-900 overflow-hidden">
+                <div
+                  className="h-full bg-teal-400 rounded-full"
+                  style={{ width: `${Math.min(100, (nutrition.protein / nutrition.targetProtein) * 100)}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Caloric details row */}
+          <div className="glass-panel rounded-2xl p-3.5 border border-zinc-800 flex items-center justify-between text-xs text-zinc-300">
+            <div>
+              <span className="text-[10px] font-bold text-zinc-400 block uppercase">Calorías Totales</span>
+              <span className="font-extrabold text-white text-sm">{nutrition.calories} / {nutrition.targetCalories} kcal</span>
+            </div>
+            <div className="flex gap-3 text-[11px] text-zinc-400 font-mono">
+              <span>Carbs: {nutrition.carbs}g</span>
+              <span>Grasas: {nutrition.fats}g</span>
+              <span>Fibra: {nutrition.fiber}g</span>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 3: SUPLEMENTOS & HÁBITOS DE LA FECHA */}
+        <section className="space-y-3">
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">3. Suplementación & Hábitos</h3>
+          <div className="glass-panel rounded-3xl border border-zinc-800 p-4 space-y-2">
+            {supplements.map((sup) => (
+              <div
+                key={sup.id}
+                className="flex items-center justify-between rounded-2xl bg-zinc-900/60 p-3 border border-zinc-800/80 text-xs"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${sup.completed ? 'bg-orange-500/20 text-orange-400' : 'bg-zinc-800 text-zinc-500'}`}>
+                    <Zap className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-white">{sup.name}</h5>
+                    <span className="text-[10px] text-zinc-400">{sup.dosage} • {sup.category}</span>
+                  </div>
+                </div>
+                <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold border ${sup.completed ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-zinc-800 text-zinc-500 border-zinc-700'}`}>
+                  {sup.completed ? <><Check className="h-3 w-3" /> Registrado</> : <><Circle className="h-3 w-3" /> Pendiente</>}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* SECTION 4: SUEÑO & RECUPERACIÓN DE LA FECHA */}
+        <section className="space-y-3">
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">4. Sueño & Recuperación Neuromuscular</h3>
+          <div className="glass-panel rounded-3xl border border-zinc-800 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500/20 text-violet-400 border border-violet-500/30">
+                  <Moon className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-extrabold text-white">{recoveryLog.sleepHours} hrs de Sueño</h4>
+                  <span className="text-[10px] text-zinc-400">Calidad: {recoveryLog.sleepQuality}/5 • Excelente</span>
+                </div>
+              </div>
+              <span className="rounded-xl bg-orange-500/20 px-2.5 py-1 text-xs font-bold text-orange-400 border border-orange-500/30">
+                SNC Restaurado
+              </span>
+            </div>
+
+            {recoveryLog.aiRecommendation && (
+              <p className="rounded-2xl bg-zinc-900 p-3 text-xs text-zinc-300 border border-zinc-800/80 leading-relaxed">
+                <strong className="text-orange-400">Diagnóstico IA: </strong>
+                {recoveryLog.aiRecommendation}
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* SECTION 5: CARDIO Y MOVILIDAD DE LA FECHA (If any) */}
+        {cardioOnTargetDate.length > 0 && (
+          <section className="space-y-3">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">5. Cardio & Movilidad</h3>
+            <div className="space-y-2">
+              {cardioOnTargetDate.map((c) => (
+                <div key={c.id} className="glass-panel flex items-center justify-between rounded-2xl border border-zinc-800 p-3.5">
+                  <div className="flex items-center gap-3">
+                    <HeartPulse className="h-5 w-5 text-rose-400" />
+                    <div>
+                      <h4 className="text-xs font-bold text-white">{c.type}</h4>
+                      <p className="text-[10px] text-zinc-400">{c.durationMinutes} min • Zona {c.hrZone} • {c.calories} kcal</p>
+                    </div>
+                  </div>
+                  {c.distanceKm > 0 && (
+                    <span className="text-xs font-mono font-bold text-rose-400">{c.distanceKm} km</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Action Buttons */}
+        <div className="pt-2 space-y-2">
+          <button
+            onClick={handleStartWorkout}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-3.5 text-xs font-black text-zinc-950 shadow-lg shadow-orange-500/20 hover:bg-orange-400 touch-press"
+          >
+            <RotateCcw className="h-4 w-4" /> Repetir Este Entrenamiento
+          </button>
+
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              router.push('/calendar');
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-zinc-800 bg-zinc-900 py-3 text-xs font-bold text-zinc-400 hover:text-white touch-press"
+          >
+            Volver al Calendario Mensual
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // VIEW 2: PRE-WORKOUT PREVIEW / LAUNCH SCREEN
+  // Rendered when workout is not active and NOT yet completed
+  // -------------------------------------------------------------
   if (!isWorkoutActiveForThisDay) {
     return (
       <div className="space-y-6 pb-28 pt-2">
@@ -64,13 +409,13 @@ export default function ActiveWorkoutPage() {
               triggerHaptic('light');
               router.push('/routines');
             }}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-zinc-300 hover:bg-zinc-800 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
             <span className="text-[10px] font-black uppercase tracking-wider text-orange-400">
-              DETALLE DE RUTINA
+              PREPARACIÓN DE SESIÓN
             </span>
             <h1 className="text-xl font-extrabold text-white">{routineDay.title}</h1>
           </div>
@@ -92,10 +437,7 @@ export default function ActiveWorkoutPage() {
             </div>
 
             <button
-              onClick={() => {
-                triggerHaptic('medium');
-                startWorkout(routineDay.id);
-              }}
+              onClick={handleStartWorkout}
               className="flex items-center gap-2 rounded-2xl bg-orange-500 px-4 py-3 text-xs font-black text-zinc-950 shadow-lg shadow-orange-500/20 hover:bg-orange-400 touch-press"
             >
               <PlayCircle className="h-5 w-5" /> Iniciar Sesión
@@ -134,7 +476,10 @@ export default function ActiveWorkoutPage() {
     );
   }
 
-  // Active workout execution view
+  // -------------------------------------------------------------
+  // VIEW 3: LIVE ACTIVE WORKOUT EXECUTION LOGGER
+  // Rendered when workout is active in store
+  // -------------------------------------------------------------
   return (
     <div className="space-y-6 pb-28 pt-2">
       {/* Active Workout Header */}
@@ -334,5 +679,13 @@ export default function ActiveWorkoutPage() {
         })}
       </div>
     </div>
+  );
+}
+
+export default function WorkoutDetailPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-zinc-400">Cargando informe...</div>}>
+      <WorkoutDetailInner />
+    </Suspense>
   );
 }

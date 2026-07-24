@@ -260,22 +260,22 @@ export const defaultRoutineDays: WorkoutDay[] = [
 ];
 
 export const initialSupplements: SupplementItem[] = [
-  { id: 'sup-1', name: 'Creatina Monohidratada', dosage: '5g', scheduledTime: '08:00', completed: true, category: 'Rendimiento', iconName: 'Zap' },
-  { id: 'sup-2', name: 'Proteína Whey Isolate', dosage: '30g', scheduledTime: '11:00', completed: true, category: 'Nutrición', iconName: 'Milk' },
+  { id: 'sup-1', name: 'Creatina Monohidratada', dosage: '5g', scheduledTime: '08:00', completed: false, category: 'Rendimiento', iconName: 'Zap' },
+  { id: 'sup-2', name: 'Proteína Whey Isolate', dosage: '30g', scheduledTime: '11:00', completed: false, category: 'Nutrición', iconName: 'Milk' },
   { id: 'sup-3', name: 'Omega 3 (EPA/DHA)', dosage: '2000mg', scheduledTime: '13:00', completed: false, category: 'Salud', iconName: 'Heart' },
   { id: 'sup-4', name: 'Citrato de Magnesio', dosage: '400mg', scheduledTime: '21:30', completed: false, category: 'Sueño', iconName: 'Moon' },
-  { id: 'sup-5', name: 'Vitamina D3 + K2', dosage: '5000 UI', scheduledTime: '08:30', completed: true, category: 'Inmunidad', iconName: 'Sun' },
-  { id: 'sup-6', name: 'Multivitamínico', dosage: '1 cap', scheduledTime: '08:30', completed: true, category: 'Salud', iconName: 'Pill' },
+  { id: 'sup-5', name: 'Vitamina D3 + K2', dosage: '5000 UI', scheduledTime: '08:30', completed: false, category: 'Inmunidad', iconName: 'Sun' },
+  { id: 'sup-6', name: 'Multivitamínico', dosage: '1 cap', scheduledTime: '08:30', completed: false, category: 'Salud', iconName: 'Pill' },
 ];
 
 export const initialNutrition: NutritionLog = {
   date: new Date().toISOString().split('T')[0],
-  calories: 2450,
-  protein: 175,
-  carbs: 260,
-  fats: 65,
-  fiber: 32,
-  waterLiters: 3.2,
+  calories: 0,
+  protein: 0,
+  carbs: 0,
+  fats: 0,
+  fiber: 0,
+  waterLiters: 0,
   targetCalories: 2750,
   targetProtein: 185,
   targetCarbs: 290,
@@ -284,124 +284,29 @@ export const initialNutrition: NutritionLog = {
 };
 
 export const defaultMobilityItems: MobilityRoutineItem[] = [
-  { id: 'mob-1', area: 'Hombros', name: 'Dislocaciones de hombro con banda', durationSec: 60, completed: true, description: '15 reps lentas manteniendo los brazos estirados.' },
-  { id: 'mob-2', area: 'Cadera', name: '90/90 Hips Switch', durationSec: 90, completed: true, description: 'Rotación interna y externa de cadera sentado en el suelo.' },
+  { id: 'mob-1', area: 'Hombros', name: 'Dislocaciones de hombro con banda', durationSec: 60, completed: false, description: '15 reps lentas manteniendo los brazos estirados.' },
+  { id: 'mob-2', area: 'Cadera', name: '90/90 Hips Switch', durationSec: 90, completed: false, description: 'Rotación interna y externa de cadera sentado en el suelo.' },
   { id: 'mob-3', area: 'Tobillos', name: 'Movilización Ankle Wall Drive', durationSec: 60, completed: false, description: 'Empuja la rodilla hacia la pared manteniendo el talón firme.' },
   { id: 'mob-4', area: 'Espalda', name: 'Cat-Cow + Rotaciones torácicas', durationSec: 90, completed: false, description: 'Mobilidad de columna vertebral en cuadrupedia.' },
-  { id: 'mob-5', area: 'Pectorales', name: 'Estiramiento Pectoral en Marco de Puerta', durationSec: 60, completed: true, description: 'Sostiene 30 segundos por lado sintiendo el estiramiento.' },
+  { id: 'mob-5', area: 'Pectorales', name: 'Estiramiento Pectoral en Marco de Puerta', durationSec: 60, completed: false, description: 'Sostiene 30 segundos por lado sintiendo el estiramiento.' },
   { id: 'mob-6', area: 'Isquiotibiales', name: 'Elephant Walks', durationSec: 60, completed: false, description: 'Extensión alterna de rodillas inclinándote hacia adelante.' },
   { id: 'mob-7', area: 'Glúteos', name: 'Pigeon Pose Active Hold', durationSec: 90, completed: false, description: 'Estiramiento profundo de glúteo e iliopsoas.' },
 ];
 
-export const initialMeasurements: BodyMeasurements[] = [
-  {
-    id: 'm-1',
-    date: '2026-05-15',
-    weight: 80.2,
-    rightArm: 39.2,
-    leftArm: 39.0,
-    forearm: 31.5,
-    chest: 104.0,
-    waist: 84.5,
-    hips: 98.0,
-    thigh: 60.0,
-    calf: 38.0,
-    neck: 40.0,
-    bodyFatPercentage: 15.2,
-    photoFrontUrl: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600&auto=format&fit=crop&q=80',
-    photoBackUrl: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=600&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'm-2',
-    date: '2026-06-15',
-    weight: 79.2,
-    rightArm: 39.8,
-    leftArm: 39.5,
-    forearm: 32.0,
-    chest: 105.5,
-    waist: 82.8,
-    hips: 97.5,
-    thigh: 61.2,
-    calf: 38.5,
-    neck: 40.2,
-    bodyFatPercentage: 14.1,
-    photoFrontUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&auto=format&fit=crop&q=80',
-    photoBackUrl: 'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=600&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'm-3',
-    date: '2026-07-15',
-    weight: 78.5,
-    rightArm: 40.5,
-    leftArm: 40.2,
-    forearm: 32.4,
-    chest: 107.0,
-    waist: 81.0,
-    hips: 97.0,
-    thigh: 62.0,
-    calf: 39.0,
-    neck: 40.5,
-    bodyFatPercentage: 13.2,
-    photoFrontUrl: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&auto=format&fit=crop&q=80',
-    photoBackUrl: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=600&auto=format&fit=crop&q=80',
-  },
-];
+export const initialMeasurements: BodyMeasurements[] = [];
 
 export const initialRecovery: RecoveryLog = {
   id: 'rec-1',
   date: new Date().toISOString().split('T')[0],
-  sleepHours: 7.8,
-  sleepQuality: 4,
-  muscleSoreness: 2,
-  energyLevel: 4,
-  stressLevel: 2,
-  aiRecommendation: 'Excelente nivel de recuperación neuromuscular. Tu cuerpo está listo para afrontar una carga alta hoy.',
+  sleepHours: 8.0,
+  sleepQuality: 5,
+  muscleSoreness: 1,
+  energyLevel: 5,
+  stressLevel: 1,
+  aiRecommendation: 'Estado de descanso inicial optimizado.',
 };
 
-export const initialCardioLogs: CardioLog[] = [
-  { id: 'c-1', date: '2026-07-18', type: 'Running', durationMinutes: 30, hrZone: 2, calories: 320, distanceKm: 5.2, pace: '5:46', notes: 'Z2 mantenida suave' },
-  { id: 'c-2', date: '2026-07-21', type: 'HIIT', durationMinutes: 20, hrZone: 4, calories: 250, distanceKm: 0, pace: '-', notes: 'Intervalos en bici fija' },
-  { id: 'c-3', date: '2026-07-23', type: 'Caminata', durationMinutes: 45, hrZone: 1, calories: 180, distanceKm: 4.1, pace: '10:58', notes: 'Recuperación activa' },
-];
+export const initialCardioLogs: CardioLog[] = [];
 
-export const initialWorkoutLogs: WorkoutLog[] = [
-  {
-    id: 'log-1',
-    date: '2026-07-20',
-    dayId: 'lunes',
-    title: 'Push (Pecho - Hombro - Tríceps)',
-    durationMinutes: 62,
-    totalVolumeKg: 8450,
-    totalSetsCompleted: 15,
-    exercises: [
-      {
-        exerciseId: 'ex-bench-press',
-        exerciseName: 'Press Banca con Barra',
-        sets: [
-          { id: 's1', setNumber: 1, type: 'working', weight: 90, reps: 8, rpe: 8, rir: 2, restSeconds: 180, completed: true, isPR: false },
-          { id: 's2', setNumber: 2, type: 'working', weight: 90, reps: 8, rpe: 8.5, rir: 1.5, restSeconds: 180, completed: true, isPR: false },
-          { id: 's3', setNumber: 3, type: 'working', weight: 90, reps: 7, rpe: 9, rir: 1, restSeconds: 180, completed: true, isPR: false },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'log-2',
-    date: '2026-07-21',
-    dayId: 'martes',
-    title: 'Pull (Espalda - Bíceps)',
-    durationMinutes: 58,
-    totalVolumeKg: 9200,
-    totalSetsCompleted: 14,
-    exercises: [
-      {
-        exerciseId: 'ex-pullup',
-        exerciseName: 'Dominadas Pronas',
-        sets: [
-          { id: 's4', setNumber: 1, type: 'working', weight: 10, reps: 8, rpe: 8, rir: 2, restSeconds: 150, completed: true, isPR: true },
-          { id: 's5', setNumber: 2, type: 'working', weight: 10, reps: 8, rpe: 8.5, rir: 1.5, restSeconds: 150, completed: true, isPR: false },
-        ],
-      },
-    ],
-  },
-];
+export const initialWorkoutLogs: WorkoutLog[] = [];
+

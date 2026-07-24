@@ -28,6 +28,8 @@ import {
   initialWorkoutLogs,
 } from '../mockData';
 import { generateAICoachInsights } from '../progressionEngine';
+import { getLocalDateString } from '../utils';
+
 
 interface ActiveWorkoutState {
   dayId: string;
@@ -276,7 +278,7 @@ export const useAppStore = create<AppStore>()(
 
         const newLog: WorkoutLog = {
           id: `log-${Date.now()}`,
-          date: new Date().toISOString().split('T')[0],
+          date: getLocalDateString(),
           dayId: dayId as any,
           title,
           durationMinutes,

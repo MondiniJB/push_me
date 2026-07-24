@@ -25,7 +25,7 @@ import {
   Tooltip,
 } from 'recharts';
 import { useAppStore } from '@/lib/store/useAppStore';
-import { formatWeight, triggerHaptic, triggerConfetti } from '@/lib/utils';
+import { formatWeight, triggerHaptic, triggerConfetti, getLocalDateString } from '@/lib/utils';
 
 export default function HomePage() {
   const {
@@ -66,7 +66,7 @@ export default function HomePage() {
     for (let i = 0; i < 7; i++) {
       const dayDate = new Date(monday);
       dayDate.setDate(monday.getDate() + i);
-      const dateStr = dayDate.toISOString().split('T')[0];
+      const dateStr = getLocalDateString(dayDate);
       weekMap[i] = workoutLogs.some((l) => l.date === dateStr && l.totalSetsCompleted > 0);
     }
     return weekMap;
@@ -80,7 +80,7 @@ export default function HomePage() {
     let checkDate = new Date();
 
     for (let i = 0; i < 30; i++) {
-      const dateStr = checkDate.toISOString().split('T')[0];
+      const dateStr = getLocalDateString(checkDate);
       if (uniqueDates.includes(dateStr)) {
         streak++;
         checkDate.setDate(checkDate.getDate() - 1);

@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Dumbbell,
   Flame,
@@ -13,10 +14,13 @@ import {
   Clock,
   Layers,
   PlayCircle,
+  CheckCircle2,
+  RotateCcw,
+  Eye,
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { triggerHaptic } from '@/lib/utils';
-import { DayOfWeek } from '@/lib/types';
+import { DayOfWeek, WorkoutLog } from '@/lib/types';
 
 const dayIcons: Record<string, any> = {
   lunes: Dumbbell,
@@ -39,7 +43,31 @@ const dayNamesSpanish: Record<DayOfWeek, string> = {
 };
 
 export default function RoutinesPage() {
-  const { routineDays, activeWorkout } = useAppStore();
+  const router = useRouter();
+  const { routineDays, activeWorkout, workoutLogs, startWorkout } = useAppStore();
+
+  // Compute routines completed in the current week (Monday -> Sunday)
+  const completedMapThisWeek = useMemo(() => {
+    const current = new Date();
+    const dayOfWeek = current.getDay();
+    const distanceToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(current);
+    monday.setDate(current.getDate() + distanceToMonday);
+    monday.setHours(0, 0, 0, 0);
+
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    const map: Record<string, WorkoutLog> = {};
+    workoutLogs.forEach((l) => {
+      const logDate = new Date(l.date + 'T12:00:00');
+      if (logDate >= monday && logDate <= sunday && l.totalSetsCompleted > 0) {
+        map[l.dayId] = l;
+      }
+    });
+    return map;
+  }, [workoutLogs]);
 
   return (
     <div className="space-y-6 pb-24 pt-2">
@@ -51,13 +79,68 @@ export default function RoutinesPage() {
         </div>
       </div>
 
-      {/* Routine Cards Grid */}
+      {/* Routine Cards List */}
       <div className="space-y-3.5">
         {routineDays.map((day) => {
           const IconComponent = dayIcons[day.id] || Dumbbell;
           const isRestDay = day.id === 'domingo';
           const isCurrentActive = activeWorkout?.dayId === day.id;
+          const completedLog = completedMapThisWeek[day.id];
+          const isCompleted = Boolean(completedLog);
 
+          // ULTRA-COMPACT CARD FOR COMPLETED ROUTINES
+          if (isCompleted) {
+            return (
+              <div
+                key={day.id}
+                className="glass-panel flex items-center justify-between rounded-2xl border border-zinc-800/60 bg-zinc-950/70 p-3.5 opacity-85 hover:opacity-100 transition-all shadow-md"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shrink-0">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black tracking-widest text-emerald-400 uppercase">
+                        {dayNamesSpanish[day.id]}
+                      </span>
+                      <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold text-emerald-400 border border-emerald-500/30">
+                        ✓ Realizada
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-extrabold text-zinc-200 mt-0.5">{day.title}</h3>
+                    <p className="text-[11px] font-mono text-zinc-400">
+                      {completedLog.durationMinutes} min • {completedLog.totalSetsCompleted} sets • {completedLog.totalVolumeKg} kg
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <Link
+                    href={`/workout/${day.id}`}
+                    onClick={() => triggerHaptic('medium')}
+                    className="flex items-center gap-1.5 rounded-xl bg-zinc-900 px-3 py-2 text-xs font-bold text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/10 touch-press"
+                  >
+                    <Eye className="h-3.5 w-3.5" /> Ver Detalle
+                  </Link>
+
+                  <button
+                    onClick={() => {
+                      triggerHaptic('medium');
+                      startWorkout(day.id);
+                      router.push(`/workout/${day.id}`);
+                    }}
+                    title="Repetir Rutina"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white touch-press"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          // FULL CARD FOR PENDING ROUTINES
           return (
             <div
               key={day.id}
@@ -68,6 +151,7 @@ export default function RoutinesPage() {
               }`}
             >
               <div className="p-5">
+                {/* Header Row */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div
