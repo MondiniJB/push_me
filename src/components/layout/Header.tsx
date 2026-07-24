@@ -10,7 +10,7 @@ export const Header: React.FC = () => {
   const { profile, activeWorkout } = useAppStore();
 
   return (
-    <header className="sticky top-0 z-40 w-full glass-panel border-b border-zinc-800/80 px-4 py-3">
+    <header className="sticky top-0 z-40 w-full glass-panel border-b border-zinc-800/80 px-4 py-3 mb-4">
       <div className="mx-auto flex max-w-lg items-center justify-between">
         {/* Brand logo */}
         <Link
