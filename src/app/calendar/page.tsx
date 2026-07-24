@@ -1,14 +1,17 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Dumbbell, HeartPulse, Activity, X } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Dumbbell, HeartPulse, Activity, X, RotateCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/lib/store/useAppStore';
-import { triggerHaptic, getLocalDateString } from '@/lib/utils';
+import { triggerHaptic, getLocalDateString, getWorkoutLogTotalReps } from '@/lib/utils';
+
 
 export default function CalendarPage() {
   const router = useRouter();
-  const { workoutLogs, cardioLogs, mobilityItems } = useAppStore();
+  const { workoutLogs, cardioLogs, mobilityItems, nutrition, supplements, addQuickCardio, resetCardioForDate } = useAppStore();
+
+
 
 
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -202,13 +205,14 @@ export default function CalendarPage() {
 
       {/* Selected Date Activity Modal / Sheet */}
       {selectedDateStr && (
-        <section className="glass-panel space-y-3 rounded-3xl border border-zinc-800 p-5 transition-all">
+        <section className="glass-panel space-y-4 rounded-3xl border border-zinc-800 p-5 transition-all shadow-2xl">
+          {/* Header */}
           <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
             <div>
-              <h4 className="text-sm font-black text-white">
-                Actividad del {new Date(selectedDateStr + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+              <span className="text-[10px] font-black uppercase tracking-wider text-orange-400">RESUMEN GENERAL DEL DÍA</span>
+              <h4 className="text-sm font-black capitalize text-white">
+                {new Date(selectedDateStr + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
               </h4>
-              <p className="text-[10px] text-zinc-400">Detalles de registros del día</p>
             </div>
             <button
               onClick={() => setSelectedDateStr(null)}
@@ -218,59 +222,117 @@ export default function CalendarPage() {
             </button>
           </div>
 
-          {selectedWorkout && selectedWorkout.length > 0 ? (
-            <div className="space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-orange-400">Entrenamientos del Día</span>
-              {selectedWorkout.map((w) => (
+          <button
+            onClick={() => {
+              triggerHaptic('medium');
+              const firstWorkout = selectedWorkout && selectedWorkout[0];
+              const targetDayId = firstWorkout ? firstWorkout.dayId : 'lunes';
+              const logIdQuery = firstWorkout ? `&logId=${firstWorkout.id}` : '';
+              router.push(`/workout/${targetDayId}?date=${selectedDateStr}${logIdQuery}`);
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-3 text-xs font-black text-zinc-950 shadow-lg shadow-orange-500/20 hover:bg-orange-400 touch-press"
+          >
+            Ver Informe Completo <ChevronRight className="h-4 w-4" />
+          </button>
+
+          {/* 1. Entrenamiento del Día */}
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Entrenamiento</span>
+            {selectedWorkout && selectedWorkout.length > 0 ? (
+              selectedWorkout.map((w) => (
                 <div
                   key={w.id}
                   onClick={() => {
                     triggerHaptic('medium');
                     router.push(`/workout/${w.dayId}?date=${selectedDateStr}&logId=${w.id}`);
                   }}
-                  className="glass-panel flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/80 p-3 hover:border-orange-500/50 hover:bg-zinc-800/80 transition-all cursor-pointer touch-press"
+                  className="glass-panel flex items-center justify-between rounded-2xl border border-orange-500/40 bg-orange-500/10 p-3 hover:bg-orange-500/20 transition-all cursor-pointer touch-press"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/30 shrink-0">
-                      <Dumbbell className="h-5 w-5" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 text-zinc-950 font-black shrink-0">
+                      <Dumbbell className="h-4 w-4" />
                     </div>
                     <div>
-                      <h5 className="text-xs font-bold text-white">{w.title}</h5>
-                      <p className="text-[10px] text-zinc-400 mt-0.5">
-                        {w.durationMinutes} min • {w.totalSetsCompleted} sets • {w.totalVolumeKg} kg volumen total
+                      <h5 className="text-xs font-black text-white">{w.title}</h5>
+                      <p className="text-[10px] text-zinc-300 font-mono mt-0.5">
+                        {w.durationMinutes} min • {w.totalSetsCompleted} series • {getWorkoutLogTotalReps(w)} reps
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-orange-400 font-bold shrink-0">
-                    <span>Ver Informe</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </div>
+                  <span className="flex items-center gap-1 text-xs font-black text-orange-400">
+                    Ver <ChevronRight className="h-4 w-4" />
+                  </span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="py-4 text-center">
-              <p className="text-xs text-zinc-500 font-medium">Sin entrenamientos registrados en este día.</p>
-            </div>
-          )}
+              ))
+            ) : (
+              <div className="flex items-center gap-2.5 rounded-2xl bg-zinc-900/60 p-3 border border-zinc-800/80 text-xs text-zinc-500 font-medium">
+                <Dumbbell className="h-4 w-4 text-zinc-600" /> Sin entrenamiento de fuerza registrado
+              </div>
+            )}
+          </div>
 
-          {selectedCardio && selectedCardio.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-zinc-800/60">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400">Cardio</span>
-              {selectedCardio.map((c) => (
-                <div key={c.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <HeartPulse className="h-4 w-4 text-rose-400" />
-                      <h5 className="text-xs font-bold text-white">{c.type}</h5>
-                    </div>
-                    <span className="text-[10px] font-medium text-zinc-400">{c.durationMinutes} min</span>
-                  </div>
-                  {c.notes && <p className="text-[10px] text-zinc-400 mt-1">{c.notes}</p>}
-                </div>
-              ))}
+          {/* 2. Resumen Nutrición, Hidratación & Suplementos */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3 space-y-1">
+              <span className="text-[10px] font-bold text-cyan-400 uppercase">Nutrición & Agua</span>
+              <p className="text-xs font-black text-white">💧 {nutrition.waterLiters}L / {nutrition.targetWaterLiters}L</p>
+              <p className="text-[10px] text-zinc-400">🥩 {nutrition.protein}g proteína • {nutrition.calories} kcal</p>
             </div>
-          )}
+
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3 space-y-1">
+              <span className="text-[10px] font-bold text-amber-400 uppercase">Suplementos & Hábitos</span>
+              <p className="text-xs font-black text-white">
+                ⚡ {supplements.filter((s) => s.completed).length} / {supplements.length} tomados
+              </p>
+              <p className="text-[10px] text-zinc-400">Creatina: {supplements.find((s) => s.name.toLowerCase().includes('creatina'))?.completed ? '✓ Tomada' : 'Pendiente'}</p>
+            </div>
+          </div>
+
+          {/* 3. Caminata & Cardio del Día + Registro Rápido */}
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-rose-400 uppercase">Caminata & Cardio Diarios</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-rose-400 font-mono">
+                  👟 {selectedCardio.reduce((acc, c) => acc + c.durationMinutes, 0)} Min • {selectedCardio.reduce((acc, c) => acc + (c.distanceKm || 0), 0).toFixed(1)} Km
+                </span>
+                {selectedCardio.length > 0 && (
+                  <button
+                    onClick={() => {
+                      triggerHaptic('heavy');
+                      resetCardioForDate(selectedDateStr);
+                    }}
+                    title="Poner en 0"
+                    className="flex items-center gap-1 rounded-xl bg-zinc-900 border border-zinc-800 px-2 py-0.5 text-[9px] font-bold text-zinc-400 hover:text-rose-400 hover:border-rose-500/30 transition-all touch-press"
+                  >
+                    <RotateCcw className="h-2.5 w-2.5" /> Poner en 0
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {selectedDateStr === todayStr && (
+              <div className="grid grid-cols-4 gap-1.5 pt-1">
+                {[
+                  { mins: 10, km: 1.0, label: '+10m / 1k' },
+                  { mins: 20, km: 2.0, label: '+20m / 2k' },
+                  { mins: 30, km: 3.0, label: '+30m / 3k' },
+                  { mins: 45, km: 4.5, label: '+45m / 4.5k' },
+                ].map((b) => (
+                  <button
+                    key={b.label}
+                    onClick={() => {
+                      triggerHaptic('medium');
+                      addQuickCardio(b.mins, b.km);
+                    }}
+                    className="rounded-xl border border-rose-500/30 bg-rose-500/10 py-1.5 text-center text-[10px] font-black text-rose-400 hover:bg-rose-500/20 transition-all touch-press"
+                  >
+                    {b.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
       )}
     </div>

@@ -98,3 +98,27 @@ export function getLocalDateString(date: Date = new Date()): string {
   return `${year}-${month}-${day}`;
 }
 
+/**
+ * Calculates total completed reps across all exercises in a WorkoutLog.
+ */
+export function getWorkoutLogTotalReps(log?: {
+  totalRepsCompleted?: number;
+  exercises?: { sets?: { completed?: boolean; reps?: number }[] }[];
+}): number {
+  if (!log) return 0;
+  if (log.totalRepsCompleted !== undefined && log.totalRepsCompleted > 0) {
+    return log.totalRepsCompleted;
+  }
+  if (!log.exercises) return 0;
+  return log.exercises.reduce((acc, ex) => {
+    if (!ex.sets) return acc;
+    return (
+      acc +
+      ex.sets
+        .filter((s) => s.completed)
+        .reduce((sAcc, s) => sAcc + (Number(s.reps) || 0), 0)
+    );
+  }, 0);
+}
+
+

@@ -11,7 +11,6 @@ const navItems = [
   { label: 'Inicio', href: '/', icon: LayoutDashboard },
   { label: 'Rutinas', href: '/routines', icon: Dumbbell },
   { label: 'Progresión', href: '/progress', icon: TrendingUp },
-  { label: 'Medidas', href: '/measurements', icon: Scale },
   { label: 'Nutrición', href: '/nutrition', icon: Apple },
   { label: 'Calendario', href: '/calendar', icon: Calendar },
 ];
@@ -22,7 +21,8 @@ export const BottomNav: React.FC = () => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-zinc-800/80 px-2 py-2 pb-safe">
-      <div className="mx-auto grid grid-cols-6 w-full max-w-lg items-center text-center">
+      <div className="mx-auto grid grid-cols-5 w-full max-w-lg items-center text-center">
+
         {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
           const Icon = item.icon;

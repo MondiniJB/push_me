@@ -1,179 +1,335 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Camera, Plus, SlidersHorizontal } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+  ArrowLeft,
+  Scale,
+  Minus,
+  Plus,
+  Trash2,
+  Calendar,
+  TrendingDown,
+  TrendingUp,
+  CheckCircle2,
+} from 'lucide-react';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from 'recharts';
 import { useAppStore } from '@/lib/store/useAppStore';
-import { triggerHaptic } from '@/lib/utils';
+import { triggerHaptic, triggerConfetti, getLocalDateString } from '@/lib/utils';
 import { BodyMeasurements } from '@/lib/types';
 
-export default function MeasurementsPage() {
-  const { bodyMeasurements, addMeasurement } = useAppStore();
+export default function WeightTrackerPage() {
+  const router = useRouter();
+  const { bodyMeasurements, addMeasurement, deleteMeasurement } = useAppStore();
 
-  const [sliderPosition, setSliderPosition] = useState<number>(50);
-  const [showModal, setShowModal] = useState<boolean>(false);
+  // Date selection (default today)
+  const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
 
-  const [newMeasurement, setNewMeasurement] = useState<Partial<BodyMeasurements>>({
-    weight: 78.5,
-    rightArm: 40.5,
-    leftArm: 40.2,
-    forearm: 32.4,
-    chest: 107.0,
-    waist: 81.0,
-    hips: 97.0,
-    thigh: 62.0,
-    calf: 39.0,
-    neck: 40.5,
-    bodyFatPercentage: 13.2,
-  });
+  // Current weight input
+  const latestWeight = bodyMeasurements[0]?.weight || 78.5;
+  const [weightVal, setWeightVal] = useState<number>(latestWeight);
+  const [weightRange, setWeightRange] = useState<'1M' | '3M' | 'ALL'>('3M');
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<boolean>(false);
 
-  const latest = bodyMeasurements[0] || {
-    weight: 78.5,
-    rightArm: 40.5,
-    leftArm: 40.2,
-    forearm: 32.4,
-    chest: 107.0,
-    waist: 81.0,
-    hips: 97.0,
-    thigh: 62.0,
-    calf: 39.0,
-    neck: 40.5,
+  // Sorting measurements by date
+  const sortedMeasurements = [...bodyMeasurements].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  // Weight chart dataset (sorted chronological ascending)
+  const weightChartData = [...bodyMeasurements]
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map((m) => ({
+      date: new Date(m.date + 'T12:00:00').toLocaleDateString('es-ES', {
+        month: 'short',
+        day: 'numeric',
+      }),
+      peso: m.weight,
+    }));
+
+  const handleAdjustWeight = (delta: number) => {
+    triggerHaptic('light');
+    setWeightVal((prev) => parseFloat(Math.max(30, Math.min(250, prev + delta)).toFixed(1)));
   };
 
-  const prev = bodyMeasurements[1] || latest;
-
-  const photoBefore = bodyMeasurements[bodyMeasurements.length - 1]?.photoFrontUrl || 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=800&auto=format&fit=crop&q=80';
-  const photoAfter = latest?.photoFrontUrl || 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=800&auto=format&fit=crop&q=80';
-
-  const handleSave = () => {
+  const handleSaveWeight = () => {
     triggerHaptic('medium');
-    const created: BodyMeasurements = {
-      id: `m-${Date.now()}`,
-      date: new Date().toISOString().split('T')[0],
-      weight: newMeasurement.weight || 78,
-      rightArm: newMeasurement.rightArm || 40,
-      leftArm: newMeasurement.leftArm || 40,
-      forearm: newMeasurement.forearm || 32,
-      chest: newMeasurement.chest || 105,
-      waist: newMeasurement.waist || 81,
-      hips: newMeasurement.hips || 97,
-      thigh: newMeasurement.thigh || 61,
-      calf: newMeasurement.calf || 38,
-      neck: newMeasurement.neck || 40,
-      bodyFatPercentage: newMeasurement.bodyFatPercentage || 13.5,
-      photoFrontUrl: photoAfter,
-    };
-    addMeasurement(created);
-    setShowModal(false);
-  };
+    triggerConfetti();
 
-  const bodyPointList = [
-    { label: 'Brazo Derecho', val: latest.rightArm, prevVal: prev.rightArm, unit: 'cm' },
-    { label: 'Brazo Izquierdo', val: latest.leftArm, prevVal: prev.leftArm, unit: 'cm' },
-    { label: 'Antebrazo', val: latest.forearm, prevVal: prev.forearm, unit: 'cm' },
-    { label: 'Pecho', val: latest.chest, prevVal: prev.chest, unit: 'cm' },
-    { label: 'Cintura', val: latest.waist, prevVal: prev.waist, unit: 'cm' },
-    { label: 'Cadera', val: latest.hips, prevVal: prev.hips, unit: 'cm' },
-    { label: 'Muslo', val: latest.thigh, prevVal: prev.thigh, unit: 'cm' },
-    { label: 'Pantorrilla', val: latest.calf, prevVal: prev.calf, unit: 'cm' },
-    { label: 'Cuello', val: latest.neck, prevVal: prev.neck, unit: 'cm' },
-  ];
+    const newRecord: BodyMeasurements = {
+      id: `weight-${Date.now()}`,
+      date: selectedDate,
+      weight: parseFloat(weightVal.toFixed(1)),
+      rightArm: bodyMeasurements[0]?.rightArm || 40,
+      leftArm: bodyMeasurements[0]?.leftArm || 40,
+      forearm: bodyMeasurements[0]?.forearm || 32,
+      chest: bodyMeasurements[0]?.chest || 105,
+      waist: bodyMeasurements[0]?.waist || 81,
+      hips: bodyMeasurements[0]?.hips || 97,
+      thigh: bodyMeasurements[0]?.thigh || 61,
+      calf: bodyMeasurements[0]?.calf || 38,
+      neck: bodyMeasurements[0]?.neck || 40,
+      bodyFatPercentage: bodyMeasurements[0]?.bodyFatPercentage || 13.5,
+    };
+
+    addMeasurement(newRecord);
+
+    setSaveSuccessMsg(true);
+    setTimeout(() => setSaveSuccessMsg(false), 2500);
+  };
 
   return (
     <div className="space-y-6 pb-24 pt-2">
-      {/* Page Title & Add Action */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-white">Medidas Corporales</h1>
-          <p className="text-xs text-zinc-400">Seguimiento antropométrico y galería de progreso</p>
-        </div>
+      {/* Header */}
+      <div className="flex items-center gap-3">
         <button
           onClick={() => {
             triggerHaptic('light');
-            setShowModal(true);
+            router.push('/');
           }}
-          className="flex items-center gap-1 rounded-2xl bg-orange-500 px-3 py-2 text-xs font-bold text-zinc-950 shadow-md shadow-orange-500/20 hover:bg-orange-400 touch-press"
+          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800 transition-all touch-press"
         >
-          <Plus className="h-4 w-4" /> Registrar
+          <ArrowLeft className="h-5 w-5" />
         </button>
+        <div>
+          <h1 className="text-xl font-black text-white tracking-tight">
+            Registro & Evolución de Peso
+          </h1>
+          <p className="text-xs text-zinc-400">Control de peso corporal en kg</p>
+        </div>
       </div>
 
-      {/* Interactive Photo Comparison Slider */}
-      <section className="glass-panel space-y-3 rounded-3xl border border-zinc-800 p-5">
+      {/* Main Interactive Weight Logger Card */}
+      <section className="glass-panel space-y-4 rounded-3xl border border-orange-500/30 bg-orange-500/5 p-5 shadow-2xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Camera className="h-4 w-4 text-orange-400" />
-            <h3 className="text-sm font-black text-white">Comparador de Fotos Mensuales</h3>
-          </div>
-          <span className="text-[10px] font-bold text-zinc-400">Arrastra para comparar</span>
-        </div>
-
-        {/* Interactive Split Photo Container */}
-        <div className="relative h-72 w-full overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 touch-none">
-          {/* Background Image (After / Current) */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photoAfter} alt="Actual" className="absolute inset-0 h-full w-full object-cover" />
-          <span className="absolute bottom-3 right-3 z-10 rounded-lg bg-zinc-950/80 px-2 py-1 text-[10px] font-extrabold text-orange-400 border border-zinc-800">
-            Julio 2026 (Actual)
-          </span>
-
-          {/* Foreground Image (Before / Initial) Clipped */}
-          <div
-            className="absolute inset-y-0 left-0 overflow-hidden"
-            style={{ width: `${sliderPosition}%` }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={photoBefore}
-              alt="Inicial"
-              className="h-full w-full object-cover max-w-none"
-              style={{ width: '100%' }}
-            />
-            <span className="absolute bottom-3 left-3 z-10 rounded-lg bg-zinc-950/80 px-2 py-1 text-[10px] font-extrabold text-amber-400 border border-zinc-800">
-              Mayo 2026 (Antes)
+            <Scale className="h-5 w-5 text-orange-400" />
+            <span className="text-xs font-black uppercase tracking-wider text-orange-400">
+              Registrar Peso Corporal
             </span>
           </div>
 
-          {/* Vertical Divider line */}
-          <div
-            className="absolute bottom-0 top-0 w-1 bg-white shadow-xl cursor-ew-resize"
-            style={{ left: `${sliderPosition}%` }}
+          <div className="flex items-center gap-1 rounded-xl bg-zinc-900 px-2.5 py-1 border border-zinc-800 text-xs text-zinc-300 font-bold">
+            <Calendar className="h-3.5 w-3.5 text-zinc-400" />
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+            />
+          </div>
+        </div>
+
+        {/* Big Weight Input Controls (- and + side buttons + type input) */}
+        <div className="flex items-center justify-center gap-4 py-3">
+          <button
+            onClick={() => handleAdjustWeight(-0.5)}
+            className="flex h-14 w-14 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900/90 text-zinc-300 hover:border-orange-500/50 hover:bg-zinc-800 hover:text-white transition-all touch-press shadow-md"
           >
-            <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-zinc-950 shadow-lg">
-              <SlidersHorizontal className="h-4 w-4" />
+            <Minus className="h-6 w-6 stroke-[3]" />
+          </button>
+
+          <div className="flex flex-col items-center">
+            <div className="flex items-baseline gap-1">
+              <input
+                type="number"
+                step="0.1"
+                min="30"
+                max="250"
+                value={weightVal}
+                onChange={(e) => setWeightVal(parseFloat(e.target.value) || 0)}
+                className="w-32 bg-transparent text-center text-4xl font-black text-white font-mono focus:outline-none focus:border-b-2 focus:border-orange-500"
+              />
+              <span className="text-xl font-black text-orange-400">kg</span>
             </div>
+            <span className="text-[10px] text-zinc-400 font-medium">
+              Escribe o usa los botones +/-
+            </span>
           </div>
 
-          {/* Range input overlay */}
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={sliderPosition}
-            onChange={(e) => setSliderPosition(Number(e.target.value))}
-            className="absolute inset-0 h-full w-full opacity-0 cursor-ew-resize"
-          />
+          <button
+            onClick={() => handleAdjustWeight(0.5)}
+            className="flex h-14 w-14 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900/90 text-zinc-300 hover:border-orange-500/50 hover:bg-zinc-800 hover:text-white transition-all touch-press shadow-md"
+          >
+            <Plus className="h-6 w-6 stroke-[3]" />
+          </button>
+        </div>
+
+        {/* Quick Increment Chips */}
+        <div className="grid grid-cols-6 gap-1.5">
+          {[
+            { label: '-1.0', val: -1.0 },
+            { label: '-0.5', val: -0.5 },
+            { label: '-0.1', val: -0.1 },
+            { label: '+0.1', val: 0.1 },
+            { label: '+0.5', val: 0.5 },
+            { label: '+1.0', val: 1.0 },
+          ].map((chip) => (
+            <button
+              key={chip.label}
+              onClick={() => handleAdjustWeight(chip.val)}
+              className="rounded-xl border border-zinc-800 bg-zinc-900/80 py-2 text-center text-xs font-mono font-bold text-zinc-300 hover:border-orange-500/40 hover:bg-orange-500/10 hover:text-orange-400 transition-all touch-press"
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Save Button */}
+        <button
+          onClick={handleSaveWeight}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-3.5 text-xs font-black text-zinc-950 shadow-lg shadow-orange-500/20 hover:bg-orange-400 transition-all touch-press"
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          Guardar Peso Corporal ({weightVal} kg)
+        </button>
+
+        {saveSuccessMsg && (
+          <p className="text-center text-xs font-bold text-emerald-400 animate-in fade-in">
+            ✓ ¡Peso registrado correctamente!
+          </p>
+        )}
+      </section>
+
+      {/* Weight Chart Section */}
+      <section className="glass-panel space-y-4 rounded-3xl border border-zinc-800 p-5 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-black text-white">Gráfico de Evolución</h3>
+            <p className="text-[11px] text-zinc-400">Tendencia de peso corporal en kg</p>
+          </div>
+          <div className="flex items-center gap-1 rounded-xl bg-zinc-900 p-1 border border-zinc-800">
+            {(['1M', '3M', 'ALL'] as const).map((r) => (
+              <button
+                key={r}
+                onClick={() => {
+                  triggerHaptic('light');
+                  setWeightRange(r);
+                }}
+                className={`rounded-lg px-2.5 py-1 text-[10px] font-bold transition-all ${
+                  weightRange === r
+                    ? 'bg-orange-500 text-zinc-950 shadow-md'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="h-48 w-full pt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={weightChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+              <defs>
+                <linearGradient id="weightGradModal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#ff6b00" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#ff6b00" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="date"
+                stroke="#71717a"
+                tick={{ fill: '#71717a', fontSize: 10 }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                domain={['dataMin - 1', 'dataMax + 1']}
+                stroke="#71717a"
+                tick={{ fill: '#71717a', fontSize: 10 }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#18181b',
+                  borderColor: '#27272a',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                }}
+                itemStyle={{ color: '#ff6b00' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="peso"
+                stroke="#ff6b00"
+                strokeWidth={3}
+                fillOpacity={1}
+                fill="url(#weightGradModal)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </section>
 
-      {/* Grid of Antropometric Points */}
+      {/* History Log Table */}
       <section className="space-y-3">
-        <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">Puntos de Medición Corporales</h3>
-        <div className="grid grid-cols-2 gap-3">
-          {bodyPointList.map((item) => {
-            const diff = item.val && item.prevVal ? item.val - item.prevVal : 0;
-            const diffColor = diff > 0 ? 'text-orange-400' : diff < 0 ? 'text-cyan-400' : 'text-zinc-500';
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">
+          Historial de Mediciones
+        </h3>
+
+        <div className="space-y-2">
+          {sortedMeasurements.map((m, idx) => {
+            const nextM = sortedMeasurements[idx + 1];
+            const diff = nextM ? m.weight - nextM.weight : 0;
 
             return (
-              <div key={item.label} className="glass-panel rounded-2xl p-3.5 border border-zinc-800 space-y-1">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase">{item.label}</span>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-xl font-black text-white">
-                    {item.val || '--'} {item.unit}
-                  </span>
-                  {diff !== 0 && (
-                    <span className={`text-[11px] font-bold ${diffColor}`}>
-                      {diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1)}
+              <div
+                key={m.id}
+                className="glass-panel flex items-center justify-between rounded-2xl border border-zinc-800 p-3.5"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/30">
+                    <Scale className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-white font-mono">{m.weight} kg</h4>
+                    <span className="text-[10px] text-zinc-400">
+                      {new Date(m.date + 'T12:00:00').toLocaleDateString('es-ES', {
+                        weekday: 'short',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
                     </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {diff !== 0 && (
+                    <span
+                      className={`flex items-center gap-0.5 text-xs font-mono font-bold ${
+                        diff < 0 ? 'text-emerald-400' : 'text-amber-400'
+                      }`}
+                    >
+                      {diff < 0 ? (
+                        <TrendingDown className="h-3.5 w-3.5" />
+                      ) : (
+                        <TrendingUp className="h-3.5 w-3.5" />
+                      )}
+                      {diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1)} kg
+                    </span>
+                  )}
+
+                  {sortedMeasurements.length > 1 && (
+                    <button
+                      onClick={() => {
+                        triggerHaptic('medium');
+                        deleteMeasurement(m.id);
+                      }}
+                      title="Eliminar registro"
+                      className="rounded-xl bg-zinc-900 p-2 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all touch-press"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   )}
                 </div>
               </div>
@@ -181,76 +337,6 @@ export default function MeasurementsPage() {
           })}
         </div>
       </section>
-
-      {/* New Measurement Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="glass-panel w-full max-w-lg space-y-4 rounded-3xl border border-zinc-700 bg-zinc-950 p-5 max-h-[85vh] overflow-y-auto">
-            <h3 className="text-lg font-black text-white">Registrar Nuevas Medidas</h3>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[10px] font-bold text-zinc-400">Peso (kg)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={newMeasurement.weight}
-                  onChange={(e) => setNewMeasurement({ ...newMeasurement, weight: parseFloat(e.target.value) })}
-                  className="w-full rounded-xl bg-zinc-900 border border-zinc-800 p-2.5 text-sm font-bold text-white"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-zinc-400">Brazo Der (cm)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={newMeasurement.rightArm}
-                  onChange={(e) => setNewMeasurement({ ...newMeasurement, rightArm: parseFloat(e.target.value) })}
-                  className="w-full rounded-xl bg-zinc-900 border border-zinc-800 p-2.5 text-sm font-bold text-white"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-zinc-400">Pecho (cm)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={newMeasurement.chest}
-                  onChange={(e) => setNewMeasurement({ ...newMeasurement, chest: parseFloat(e.target.value) })}
-                  className="w-full rounded-xl bg-zinc-900 border border-zinc-800 p-2.5 text-sm font-bold text-white"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-zinc-400">Cintura (cm)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={newMeasurement.waist}
-                  onChange={(e) => setNewMeasurement({ ...newMeasurement, waist: parseFloat(e.target.value) })}
-                  className="w-full rounded-xl bg-zinc-900 border border-zinc-800 p-2.5 text-sm font-bold text-white"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-2 pt-2">
-              <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 rounded-xl bg-zinc-800 py-3 text-xs font-bold text-zinc-300"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSave}
-                className="flex-1 rounded-xl bg-orange-500 py-3 text-xs font-black text-zinc-950"
-              >
-                Guardar Registro
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

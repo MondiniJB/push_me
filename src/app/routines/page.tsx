@@ -19,7 +19,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store/useAppStore';
-import { triggerHaptic } from '@/lib/utils';
+import { triggerHaptic, getLocalDateString, getWorkoutLogTotalReps } from '@/lib/utils';
 import { DayOfWeek, WorkoutLog } from '@/lib/types';
 
 const dayIcons: Record<string, any> = {
@@ -110,7 +110,7 @@ export default function RoutinesPage() {
                     </div>
                     <h3 className="text-sm font-extrabold text-zinc-200 mt-0.5">{day.title}</h3>
                     <p className="text-[11px] font-mono text-zinc-400">
-                      {completedLog.durationMinutes} min • {completedLog.totalSetsCompleted} sets • {completedLog.totalVolumeKg} kg
+                      {completedLog.durationMinutes} min • {completedLog.totalSetsCompleted} series • {getWorkoutLogTotalReps(completedLog)} reps
                     </p>
                   </div>
                 </div>

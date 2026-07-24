@@ -76,6 +76,8 @@ interface AppStore {
   workoutLogs: WorkoutLog[];
   bodyMeasurements: BodyMeasurements[];
   addMeasurement: (measurement: BodyMeasurements) => void;
+  deleteMeasurement: (id: string) => void;
+
 
   // Supplements & Nutrition
   supplements: SupplementItem[];
@@ -88,8 +90,12 @@ interface AppStore {
   toggleMobilityItem: (id: string) => void;
   cardioLogs: CardioLog[];
   addCardioLog: (log: CardioLog) => void;
+  addQuickCardio: (durationMinutes: number, distanceKm: number) => void;
+  resetCardioForDate: (dateStr?: string) => void;
   recoveryLog: RecoveryLog;
   updateRecoveryLog: (updated: Partial<RecoveryLog>) => void;
+
+
 
   // Export & Data Reset
   exportAllData: () => string;
@@ -345,7 +351,21 @@ export const useAppStore = create<AppStore>()(
 
       bodyMeasurements: initialMeasurements,
       addMeasurement: (m) =>
-        set((state) => ({ bodyMeasurements: [m, ...state.bodyMeasurements] })),
+        set((state) => {
+          const existingIndex = state.bodyMeasurements.findIndex((item) => item.date === m.date);
+          if (existingIndex >= 0) {
+            const updated = [...state.bodyMeasurements];
+            updated[existingIndex] = { ...updated[existingIndex], ...m };
+            return { bodyMeasurements: updated };
+          }
+          return { bodyMeasurements: [m, ...state.bodyMeasurements] };
+        }),
+
+      deleteMeasurement: (id) =>
+        set((state) => ({
+          bodyMeasurements: state.bodyMeasurements.filter((m) => m.id !== id),
+        })),
+
 
       supplements: initialSupplements,
       toggleSupplement: (id) =>
@@ -368,6 +388,48 @@ export const useAppStore = create<AppStore>()(
       cardioLogs: initialCardioLogs,
       addCardioLog: (log) =>
         set((state) => ({ cardioLogs: [log, ...state.cardioLogs] })),
+
+      addQuickCardio: (durationMinutes, distanceKm) => {
+        const todayStr = getLocalDateString();
+        const existingIndex = get().cardioLogs.findIndex(
+          (c) => c.date === todayStr && c.notes === 'Registro rápido de caminata/cardio'
+        );
+
+        if (existingIndex >= 0) {
+          const current = get().cardioLogs[existingIndex];
+          const newMins = current.durationMinutes + durationMinutes;
+          const newKm = parseFloat(((current.distanceKm || 0) + distanceKm).toFixed(1));
+          const updatedLogs = [...get().cardioLogs];
+          updatedLogs[existingIndex] = {
+            ...current,
+            durationMinutes: newMins,
+            distanceKm: newKm,
+            calories: Math.round(newMins * 6.5 + newKm * 40),
+            pace: newKm > 0 ? `${(newMins / newKm).toFixed(1)} min/km` : '-',
+          };
+          set({ cardioLogs: updatedLogs });
+        } else {
+          const newLog: CardioLog = {
+            id: `c-quick-${Date.now()}`,
+            date: todayStr,
+            type: 'Caminata',
+            durationMinutes,
+            hrZone: 2,
+            calories: Math.round(durationMinutes * 6.5 + distanceKm * 40),
+            distanceKm,
+            pace: distanceKm > 0 ? `${(durationMinutes / distanceKm).toFixed(1)} min/km` : '-',
+            notes: 'Registro rápido de caminata/cardio',
+          };
+          set((state) => ({ cardioLogs: [newLog, ...state.cardioLogs] }));
+        }
+      },
+
+      resetCardioForDate: (dateStr) => {
+        const targetDate = dateStr || getLocalDateString();
+        set((state) => ({
+          cardioLogs: state.cardioLogs.filter((c) => c.date !== targetDate),
+        }));
+      },
 
       recoveryLog: initialRecovery,
       updateRecoveryLog: (updated) =>

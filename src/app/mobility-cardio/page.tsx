@@ -54,8 +54,8 @@ export default function MobilityCardioPage() {
     <div className="space-y-6 pb-24 pt-2">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-black tracking-tight text-white">Movilidad, Cardio & Recuperación</h1>
-        <p className="text-xs text-zinc-400">Acondicionamiento aeróbico y regeneración del SNC</p>
+        <h1 className="text-2xl font-black tracking-tight text-white">Movilidad & Cardio Diarios</h1>
+        <p className="text-xs text-zinc-400">Acondicionamiento aeróbico, caminatas y salud articular</p>
       </div>
 
       {/* Navigation Pills */}
@@ -63,8 +63,7 @@ export default function MobilityCardioPage() {
         {(
           [
             { id: 'mobility', label: 'Movilidad' },
-            { id: 'cardio', label: 'Cardio' },
-            { id: 'recovery', label: 'Recuperación' },
+            { id: 'cardio', label: 'Caminata & Cardio' },
           ] as const
         ).map((t) => (
           <button
@@ -83,6 +82,7 @@ export default function MobilityCardioPage() {
           </button>
         ))}
       </div>
+
 
       {/* TAB 1: MOVILIDAD */}
       {activeTab === 'mobility' && (

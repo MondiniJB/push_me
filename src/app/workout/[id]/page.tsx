@@ -27,7 +27,8 @@ import {
   Scale,
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store/useAppStore';
-import { triggerConfetti, triggerHaptic } from '@/lib/utils';
+import { triggerConfetti, triggerHaptic, getWorkoutLogTotalReps } from '@/lib/utils';
+
 import { getProgressionSuggestion } from '@/lib/progressionEngine';
 
 function WorkoutDetailInner() {
@@ -50,12 +51,17 @@ function WorkoutDetailInner() {
     routineDays,
     nutrition,
     supplements,
-    recoveryLog,
     cardioLogs,
+    addQuickCardio,
+    resetCardioForDate,
     mobilityItems,
   } = useAppStore();
 
+
+
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
+  const [showExerciseBreakdown, setShowExerciseBreakdown] = useState<boolean>(false);
+
 
   const routineDay = routineDays.find((d) => d.id === dayId) || routineDays[0];
   const isWorkoutActiveForThisDay = activeWorkout && activeWorkout.dayId === dayId;
@@ -161,13 +167,13 @@ function WorkoutDetailInner() {
             </div>
 
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-3.5">
-              <span className="text-[10px] font-bold text-zinc-400">VOLUMEN TOTAL</span>
-              <p className="text-xl font-black text-orange-400 mt-1">{completedLog.totalVolumeKg} kg</p>
+              <span className="text-[10px] font-bold text-zinc-400">REPETICIONES TOTALES</span>
+              <p className="text-xl font-black text-orange-400 mt-1">{getWorkoutLogTotalReps(completedLog)} reps</p>
             </div>
 
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-3.5">
               <span className="text-[10px] font-bold text-zinc-400">SERIES COMPLETADAS</span>
-              <p className="text-xl font-black text-white mt-1">{completedLog.totalSetsCompleted} sets</p>
+              <p className="text-xl font-black text-white mt-1">{completedLog.totalSetsCompleted} series</p>
             </div>
 
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-3.5">
@@ -175,70 +181,91 @@ function WorkoutDetailInner() {
               <p className="text-xl font-black text-emerald-400 mt-1">{completedLog.exercises.length} ejercicios</p>
             </div>
           </div>
+
+          {/* Ver Entrenamiento Button */}
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              setShowExerciseBreakdown((prev) => !prev);
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/90 py-3 text-xs font-black text-orange-400 hover:bg-zinc-800 transition-all touch-press mt-2"
+          >
+            <Dumbbell className="h-4 w-4" />
+            {showExerciseBreakdown ? 'Ocultar Desglose de Ejercicios' : 'Ver Entrenamiento'}
+            {showExerciseBreakdown ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
         </section>
 
-        {/* Detailed Exercises Breakdown */}
-        <section className="space-y-4">
-          <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">1. Desglose de Ejercicios Realizados</h3>
+        {/* Detailed Exercises Breakdown (Shown when 'Ver Entrenamiento' is tapped) */}
+        {showExerciseBreakdown && (
+          <section className="space-y-4 pt-1 border-t border-zinc-800/80 animate-in fade-in duration-300">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">1. Desglose de Ejercicios Realizados</h3>
 
-          {completedLog.exercises.map((item, idx) => (
-            <div key={item.exerciseId || idx} className="glass-panel space-y-3 rounded-3xl border border-zinc-800 p-4 shadow-lg">
-              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-zinc-900 text-xs font-black text-emerald-400 border border-zinc-800">
-                    {idx + 1}
-                  </span>
-                  <div>
-                    <h4 className="text-sm font-extrabold text-white">{item.exerciseName}</h4>
-                    <span className="text-[10px] text-zinc-400">
-                      {item.sets.filter((s) => s.completed).length} series completadas
+            {completedLog.exercises.map((item, idx) => (
+              <div key={item.exerciseId || idx} className="glass-panel space-y-3 rounded-3xl border border-zinc-800 p-4 shadow-lg">
+                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-zinc-900 text-xs font-black text-emerald-400 border border-zinc-800">
+                      {idx + 1}
                     </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Table of Logged Sets */}
-              <div className="space-y-1.5">
-                <div className="grid grid-cols-12 text-[10px] font-bold uppercase text-zinc-500 px-2">
-                  <span className="col-span-3">SERIE</span>
-                  <span className="col-span-3 text-center">PESO</span>
-                  <span className="col-span-3 text-center">REPS</span>
-                  <span className="col-span-3 text-right">ESTADO</span>
-                </div>
-
-                {item.sets.map((set, sIdx) => (
-                  <div
-                    key={set.id || sIdx}
-                    className="grid grid-cols-12 items-center gap-1 rounded-2xl bg-zinc-900/60 p-2.5 border border-zinc-800/80 text-xs"
-                  >
-                    <div className="col-span-3 flex items-center gap-1.5 font-bold text-zinc-300">
-                      <span>Set {set.setNumber}</span>
-                      {set.isPR && (
-                        <span className="flex items-center gap-0.5 rounded-md bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-black text-amber-400 border border-amber-500/30">
-                          <Trophy className="h-2.5 w-2.5" /> PR
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="col-span-3 text-center font-black text-white font-mono">
-                      {set.weight} kg
-                    </div>
-
-                    <div className="col-span-3 text-center font-black text-white font-mono">
-                      {set.reps} reps
-                    </div>
-
-                    <div className="col-span-3 flex justify-end">
-                      <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
-                        <CheckCircle2 className="h-4 w-4" /> Listo
+                    <div>
+                      <h4 className="text-sm font-extrabold text-white">{item.exerciseName}</h4>
+                      <span className="text-[10px] text-zinc-400">
+                        {item.sets.filter((s) => s.completed).length} series completadas
                       </span>
                     </div>
                   </div>
-                ))}
+                </div>
+
+                {/* Table of Logged Sets */}
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-12 text-[10px] font-bold uppercase text-zinc-500 px-2">
+                    <span className="col-span-3">SERIE</span>
+                    <span className="col-span-3 text-center">PESO</span>
+                    <span className="col-span-3 text-center">REPS</span>
+                    <span className="col-span-3 text-right">ESTADO</span>
+                  </div>
+
+                  {item.sets.map((set, sIdx) => (
+                    <div
+                      key={set.id || sIdx}
+                      className="grid grid-cols-12 items-center gap-1 rounded-2xl bg-zinc-900/60 p-2.5 border border-zinc-800/80 text-xs"
+                    >
+                      <div className="col-span-3 flex items-center gap-1.5 font-bold text-zinc-300">
+                        <span>Serie {set.setNumber}</span>
+                        {set.isPR && (
+                          <span className="flex items-center gap-0.5 rounded-md bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-black text-amber-400 border border-amber-500/30">
+                            <Trophy className="h-2.5 w-2.5" /> PR
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="col-span-3 text-center font-black text-white font-mono">
+                        {set.weight} kg
+                      </div>
+
+                      <div className="col-span-3 text-center font-black text-white font-mono">
+                        {set.reps} reps
+                      </div>
+
+                      <div className="col-span-3 flex justify-end">
+                        {set.completed ? (
+                          <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                            <CheckCircle2 className="h-4 w-4" /> Listo
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-[11px] font-bold text-zinc-500">
+                            <Circle className="h-4 w-4 text-zinc-600" /> Pendiente
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </section>
+            ))}
+          </section>
+        )}
 
         {/* SECTION 2: NUTRICIÓN & HIDRATACIÓN DE LA FECHA */}
         <section className="space-y-3">
@@ -321,56 +348,61 @@ function WorkoutDetailInner() {
           </div>
         </section>
 
-        {/* SECTION 4: SUEÑO & RECUPERACIÓN DE LA FECHA */}
+        {/* SECTION 4: CAMINATA & CARDIO DE LA FECHA */}
         <section className="space-y-3">
-          <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">4. Sueño & Recuperación Neuromuscular</h3>
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">4. Caminata & Cardio Diarios</h3>
           <div className="glass-panel rounded-3xl border border-zinc-800 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500/20 text-violet-400 border border-violet-500/30">
-                  <Moon className="h-5 w-5" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                  <HeartPulse className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-extrabold text-white">{recoveryLog.sleepHours} hrs de Sueño</h4>
-                  <span className="text-[10px] text-zinc-400">Calidad: {recoveryLog.sleepQuality}/5 • Excelente</span>
+                  <h4 className="text-sm font-extrabold text-white">Registro de Caminata / Cardio</h4>
+                  <span className="text-[10px] text-zinc-400">Sumar minutos y distancia fácilmente</span>
                 </div>
               </div>
-              <span className="rounded-xl bg-orange-500/20 px-2.5 py-1 text-xs font-bold text-orange-400 border border-orange-500/30">
-                SNC Restaurado
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-black text-rose-400 font-mono">
+                  👟 {cardioOnTargetDate.reduce((acc, c) => acc + c.durationMinutes, 0)} Min • {cardioOnTargetDate.reduce((acc, c) => acc + (c.distanceKm || 0), 0).toFixed(1)} Km
+                </span>
+                {cardioOnTargetDate.length > 0 && (
+                  <button
+                    onClick={() => {
+                      triggerHaptic('heavy');
+                      resetCardioForDate(targetDateStr);
+                    }}
+                    title="Poner en 0"
+                    className="flex items-center gap-1 rounded-xl bg-zinc-900 border border-zinc-800 px-2 py-1 text-[10px] font-bold text-zinc-400 hover:text-rose-400 hover:border-rose-500/30 transition-all touch-press"
+                  >
+                    <RotateCcw className="h-3 w-3" /> Poner en 0
+                  </button>
+                )}
+              </div>
             </div>
 
-            {recoveryLog.aiRecommendation && (
-              <p className="rounded-2xl bg-zinc-900 p-3 text-xs text-zinc-300 border border-zinc-800/80 leading-relaxed">
-                <strong className="text-orange-400">Diagnóstico IA: </strong>
-                {recoveryLog.aiRecommendation}
-              </p>
-            )}
-          </div>
-        </section>
-
-        {/* SECTION 5: CARDIO Y MOVILIDAD DE LA FECHA (If any) */}
-        {cardioOnTargetDate.length > 0 && (
-          <section className="space-y-3">
-            <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">5. Cardio & Movilidad</h3>
-            <div className="space-y-2">
-              {cardioOnTargetDate.map((c) => (
-                <div key={c.id} className="glass-panel flex items-center justify-between rounded-2xl border border-zinc-800 p-3.5">
-                  <div className="flex items-center gap-3">
-                    <HeartPulse className="h-5 w-5 text-rose-400" />
-                    <div>
-                      <h4 className="text-xs font-bold text-white">{c.type}</h4>
-                      <p className="text-[10px] text-zinc-400">{c.durationMinutes} min • Zona {c.hrZone} • {c.calories} kcal</p>
-                    </div>
-                  </div>
-                  {c.distanceKm > 0 && (
-                    <span className="text-xs font-mono font-bold text-rose-400">{c.distanceKm} km</span>
-                  )}
-                </div>
+            <div className="grid grid-cols-4 gap-2 pt-1">
+              {[
+                { mins: 10, km: 1.0, label: '+10m / 1k' },
+                { mins: 20, km: 2.0, label: '+20m / 2k' },
+                { mins: 30, km: 3.0, label: '+30m / 3k' },
+                { mins: 45, km: 4.5, label: '+45m / 4.5k' },
+              ].map((b) => (
+                <button
+                  key={b.label}
+                  onClick={() => {
+                    triggerHaptic('medium');
+                    triggerConfetti();
+                    addQuickCardio(b.mins, b.km);
+                  }}
+                  className="rounded-2xl border border-rose-500/30 bg-rose-500/10 py-2.5 text-center text-xs font-black text-rose-400 hover:bg-rose-500/20 transition-all touch-press"
+                >
+                  {b.label}
+                </button>
               ))}
             </div>
-          </section>
-        )}
+          </div>
+        </section>
 
         {/* Action Buttons */}
         <div className="pt-2 space-y-2">
