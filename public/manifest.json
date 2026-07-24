@@ -1,0 +1,17 @@
+{
+  "name": "PUSH_ME Workout Management PWA",
+  "short_name": "PUSH_ME",
+  "description": "Progressive Web App moderna y ultra veloz para el seguimiento de gym, progresiones de peso y nutrición.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
