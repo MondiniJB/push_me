@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Dumbbell, ShieldCheck, Sparkles, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Dumbbell, Mail, Lock, ArrowRight } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
 import { triggerHaptic } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
@@ -48,7 +48,7 @@ export default function AuthPage() {
     <div className="flex min-h-[85vh] flex-col items-center justify-center p-4">
       <div className="glass-panel w-full max-w-sm space-y-6 rounded-3xl border border-zinc-800 p-6 text-center shadow-2xl">
         {/* Brand Icon */}
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 font-black text-zinc-950 shadow-lg shadow-emerald-500/20">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-400 font-black text-zinc-950 shadow-lg shadow-orange-500/30">
           <Dumbbell className="h-7 w-7" />
         </div>
 
@@ -112,7 +112,7 @@ export default function AuthPage() {
               placeholder="tu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-2xl bg-zinc-900 border border-zinc-800 py-2.5 pl-10 pr-4 text-xs font-bold text-white focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-2xl bg-zinc-900 border border-zinc-800 py-2.5 pl-10 pr-4 text-xs font-bold text-white focus:border-orange-500 focus:outline-none"
             />
           </div>
 
@@ -123,14 +123,14 @@ export default function AuthPage() {
               placeholder="Contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-2xl bg-zinc-900 border border-zinc-800 py-2.5 pl-10 pr-4 text-xs font-bold text-white focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-2xl bg-zinc-900 border border-zinc-800 py-2.5 pl-10 pr-4 text-xs font-bold text-white focus:border-orange-500 focus:outline-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-3 text-xs font-black text-zinc-950 shadow-md shadow-emerald-500/20 hover:bg-emerald-400 touch-press"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-3 text-xs font-black text-zinc-950 shadow-md shadow-orange-500/20 hover:bg-orange-400 touch-press"
           >
             Ingresar / Registrarse <ArrowRight className="h-4 w-4" />
           </button>

@@ -1,31 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  Sliders,
   Download,
   Database,
   Target,
-  Palette,
   Globe,
   RotateCcw,
   Check,
-  ShieldCheck,
   FileSpreadsheet,
   FileJson,
-  User,
-  Sparkles,
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { triggerHaptic } from '@/lib/utils';
-import { GoalType, UnitSystem } from '@/lib/types';
+import { GoalType } from '@/lib/types';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 export default function SettingsPage() {
-  const { profile, updateProfile, exportAllData, importAllData, resetToDefaults } = useAppStore();
-
-  const [importText, setImportText] = useState('');
-  const [showImportModal, setShowImportModal] = useState(false);
+  const { profile, updateProfile, exportAllData, resetToDefaults } = useAppStore();
 
   const goalOptions: { id: GoalType; label: string; desc: string }[] = [
     { id: 'muscle_gain', label: 'Ganar Masa Muscular', desc: 'Volumen alto, sobrecarga progresiva en 6-10 reps.' },
@@ -69,7 +61,7 @@ export default function SettingsPage() {
       {/* Supabase Connection Status Badge */}
       <div className="glass-panel flex items-center justify-between rounded-2xl border border-zinc-800 p-4">
         <div className="flex items-center gap-3">
-          <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isSupabaseConfigured ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+          <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isSupabaseConfigured ? 'bg-orange-500/20 text-orange-400' : 'bg-amber-500/20 text-amber-400'}`}>
             <Database className="h-5 w-5" />
           </div>
           <div>
@@ -81,13 +73,13 @@ export default function SettingsPage() {
             </p>
           </div>
         </div>
-        <span className={`h-2.5 w-2.5 rounded-full ${isSupabaseConfigured ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+        <span className={`h-2.5 w-2.5 rounded-full ${isSupabaseConfigured ? 'bg-orange-400' : 'bg-amber-400'}`} />
       </div>
 
       {/* Primary Goal Selector */}
       <section className="glass-panel space-y-3 rounded-3xl border border-zinc-800 p-5">
         <div className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-emerald-400" />
+          <Target className="h-5 w-5 text-orange-400" />
           <h3 className="text-sm font-black text-white">Objetivo Principal de Entrenamiento</h3>
         </div>
 
@@ -101,7 +93,7 @@ export default function SettingsPage() {
               }}
               className={`flex w-full items-start justify-between rounded-2xl p-3.5 border transition-all text-left touch-press ${
                 profile.targetGoal === goal.id
-                  ? 'border-emerald-500 bg-emerald-500/10 text-white'
+                  ? 'border-orange-500 bg-orange-500/10 text-white'
                   : 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:text-white'
               }`}
             >
@@ -109,7 +101,7 @@ export default function SettingsPage() {
                 <h4 className="text-xs font-black text-white">{goal.label}</h4>
                 <p className="text-[10px] text-zinc-400 mt-0.5">{goal.desc}</p>
               </div>
-              {profile.targetGoal === goal.id && <Check className="h-5 w-5 text-emerald-400 shrink-0" />}
+              {profile.targetGoal === goal.id && <Check className="h-5 w-5 text-orange-400 shrink-0" />}
             </button>
           ))}
         </div>
@@ -119,7 +111,7 @@ export default function SettingsPage() {
       <section className="glass-panel space-y-3 rounded-3xl border border-zinc-800 p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Globe className="h-5 w-5 text-blue-400" />
+            <Globe className="h-5 w-5 text-cyan-400" />
             <h3 className="text-sm font-black text-white">Sistema de Unidades</h3>
           </div>
           <div className="flex rounded-xl bg-zinc-900 p-1 border border-zinc-800">
@@ -132,7 +124,7 @@ export default function SettingsPage() {
                 }}
                 className={`rounded-lg px-3 py-1 text-xs font-bold transition-all ${
                   profile.unitSystem === unit
-                    ? 'bg-emerald-500 text-zinc-950 shadow-md'
+                    ? 'bg-orange-500 text-zinc-950 shadow-md'
                     : 'text-zinc-400 hover:text-white'
                 }`}
               >
@@ -160,9 +152,9 @@ export default function SettingsPage() {
 
           <button
             onClick={handleDownloadCSV}
-            className="flex items-center justify-center gap-2 rounded-2xl bg-zinc-900 border border-zinc-800 py-3 text-xs font-bold text-white hover:border-emerald-500/40 touch-press"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-zinc-900 border border-zinc-800 py-3 text-xs font-bold text-white hover:border-orange-500/40 touch-press"
           >
-            <FileSpreadsheet className="h-4 w-4 text-emerald-400" /> Exportar CSV
+            <FileSpreadsheet className="h-4 w-4 text-orange-400" /> Exportar CSV
           </button>
         </div>
 

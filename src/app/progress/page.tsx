@@ -2,17 +2,9 @@
 
 import React, { useState } from 'react';
 import {
-  TrendingUp,
   Award,
   Sparkles,
-  Zap,
-  Layers,
-  Flame,
   ArrowUpRight,
-  Sliders,
-  ChevronRight,
-  BarChart3,
-  Dumbbell,
   AlertTriangle,
 } from 'lucide-react';
 import {
@@ -26,7 +18,7 @@ import {
   Line,
 } from 'recharts';
 import { useAppStore } from '@/lib/store/useAppStore';
-import { formatWeight, triggerHaptic } from '@/lib/utils';
+import { triggerHaptic } from '@/lib/utils';
 import { getProgressionSuggestion, generateAICoachInsights } from '@/lib/progressionEngine';
 import { ProgressionType } from '@/lib/types';
 
@@ -103,7 +95,7 @@ export default function ProgressPage() {
                 insight.type === 'warning'
                   ? 'border-amber-500/40 bg-amber-500/10'
                   : insight.type === 'achievement'
-                  ? 'border-emerald-500/40 bg-emerald-500/10'
+                  ? 'border-orange-500/40 bg-orange-500/10'
                   : 'border-violet-500/40 bg-violet-500/10'
               }`}
             >
@@ -113,7 +105,7 @@ export default function ProgressPage() {
                     insight.type === 'warning'
                       ? 'bg-amber-500 text-zinc-950'
                       : insight.type === 'achievement'
-                      ? 'bg-emerald-500 text-zinc-950'
+                      ? 'bg-orange-500 text-zinc-950'
                       : 'bg-violet-500 text-zinc-950'
                   }`}
                 >
@@ -129,7 +121,7 @@ export default function ProgressPage() {
                 <div className="space-y-1">
                   <h4 className="text-xs font-extrabold text-white">{insight.title}</h4>
                   <p className="text-xs text-zinc-300 leading-relaxed">{insight.description}</p>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 pt-1">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-orange-400 pt-1">
                     <ArrowUpRight className="h-3 w-3" /> {insight.actionableText}
                   </span>
                 </div>
@@ -143,7 +135,7 @@ export default function ProgressPage() {
       <section className="grid grid-cols-3 gap-2.5">
         <div className="glass-panel rounded-2xl p-3 text-center border border-zinc-800">
           <span className="text-[10px] font-bold text-zinc-400">TONELADAS</span>
-          <p className="text-lg font-black text-emerald-400">{totalTonsLifted.toFixed(1)}t</p>
+          <p className="text-lg font-black text-orange-400">{totalTonsLifted.toFixed(1)}t</p>
         </div>
         <div className="glass-panel rounded-2xl p-3 text-center border border-zinc-800">
           <span className="text-[10px] font-bold text-zinc-400">SERIES TOTALES</span>
@@ -165,7 +157,7 @@ export default function ProgressPage() {
               triggerHaptic('light');
               setSelectedExId(e.target.value);
             }}
-            className="rounded-xl bg-zinc-900 border border-zinc-700 px-3 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none"
+            className="rounded-xl bg-zinc-900 border border-zinc-700 px-3 py-1.5 text-xs font-bold text-orange-400 focus:outline-none"
           >
             {exercises.map((ex) => (
               <option key={ex.id} value={ex.id}>
@@ -207,7 +199,7 @@ export default function ProgressPage() {
                 }}
                 className={`rounded-xl p-2.5 text-xs font-bold text-left border transition-all ${
                   selectedExercise.progressionType === strat.id
-                    ? 'border-emerald-500 bg-emerald-500/15 text-emerald-400'
+                    ? 'border-orange-500 bg-orange-500/15 text-orange-400'
                     : 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:text-zinc-200'
                 }`}
               >
@@ -218,10 +210,10 @@ export default function ProgressPage() {
         </div>
 
         {/* Smart Weight Suggestion Banner */}
-        <div className="glass-panel flex items-center gap-3 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-3.5">
-          <Sparkles className="h-5 w-5 shrink-0 text-emerald-400" />
+        <div className="glass-panel flex items-center gap-3 rounded-2xl border border-orange-500/40 bg-orange-500/10 p-3.5">
+          <Sparkles className="h-5 w-5 shrink-0 text-orange-400" />
           <div>
-            <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold text-emerald-400 uppercase">
+            <span className="rounded-md bg-orange-500/20 px-2 py-0.5 text-[9px] font-bold text-orange-400 uppercase">
               {suggestion.badge}
             </span>
             <p className="text-xs font-bold text-white mt-1">{suggestion.message}</p>
@@ -237,7 +229,7 @@ export default function ProgressPage() {
               <Tooltip
                 contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', fontSize: '12px' }}
               />
-              <Line type="monotone" dataKey="pesoMax" stroke="#8b5cf6" strokeWidth={3} dot={{ fill: '#8b5cf6', r: 4 }} />
+              <Line type="monotone" dataKey="pesoMax" stroke="#ff6b00" strokeWidth={3} dot={{ fill: '#ff6b00', r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -252,7 +244,7 @@ export default function ProgressPage() {
               <XAxis dataKey="dia" stroke="#71717a" fontSize={10} axisLine={false} tickLine={false} />
               <YAxis stroke="#71717a" fontSize={10} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
-              <Bar dataKey="volumen" fill="#10b981" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="volumen" fill="#ff6b00" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

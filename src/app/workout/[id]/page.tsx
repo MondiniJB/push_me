@@ -1,25 +1,23 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   CheckCircle2,
-  Circle,
-  Clock,
-  Plus,
-  Trash2,
   Info,
   Sparkles,
-  TrendingUp,
-  Award,
   ChevronDown,
   ChevronUp,
+  Plus,
+  PlayCircle,
+  Clock,
+  Layers,
+  Dumbbell,
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store/useAppStore';
-import { formatWeight, triggerConfetti, triggerHaptic } from '@/lib/utils';
+import { triggerConfetti, triggerHaptic } from '@/lib/utils';
 import { getProgressionSuggestion } from '@/lib/progressionEngine';
-import { Exercise, WorkoutSet } from '@/lib/types';
 
 export default function ActiveWorkoutPage() {
   const params = useParams();
@@ -33,28 +31,15 @@ export default function ActiveWorkoutPage() {
     toggleSetCompleted,
     addSetToExercise,
     finishWorkout,
-    cancelWorkout,
     workoutLogs,
     routineDays,
+    cancelWorkout,
   } = useAppStore();
 
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
 
-  // Auto initialize workout if not active
-  useEffect(() => {
-    if (!activeWorkout || activeWorkout.dayId !== dayId) {
-      startWorkout(dayId);
-    }
-  }, [dayId, activeWorkout, startWorkout]);
-
-  if (!activeWorkout) {
-    return (
-      <div className="flex h-[70vh] flex-col items-center justify-center space-y-3">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
-        <p className="text-xs text-zinc-400 font-medium">Cargando sesión de entrenamiento...</p>
-      </div>
-    );
-  }
+  const routineDay = routineDays.find((d) => d.id === dayId) || routineDays[0];
+  const isWorkoutActiveForThisDay = activeWorkout && activeWorkout.dayId === dayId;
 
   const toggleTechnicalNotes = (exId: string) => {
     triggerHaptic('light');
@@ -65,32 +50,114 @@ export default function ActiveWorkoutPage() {
     triggerHaptic('success');
     triggerConfetti();
     finishWorkout();
-    router.push('/progress');
+    router.push('/');
   };
 
+  // If workout is NOT active for this day, render pre-workout launch screen
+  if (!isWorkoutActiveForThisDay) {
+    return (
+      <div className="space-y-6 pb-28 pt-2">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              router.push('/routines');
+            }}
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-wider text-orange-400">
+              DETALLE DE RUTINA
+            </span>
+            <h1 className="text-xl font-extrabold text-white">{routineDay.title}</h1>
+          </div>
+        </div>
+
+        {/* Pre-workout Summary Card */}
+        <div className="glass-panel rounded-3xl border border-zinc-800 p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-zinc-400">{routineDay.subtitle}</p>
+              <div className="flex items-center gap-3 text-xs text-zinc-300 font-medium mt-2">
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5 text-orange-400" /> ~{routineDay.estMinutes} min
+                </span>
+                <span className="flex items-center gap-1">
+                  <Layers className="h-3.5 w-3.5 text-amber-400" /> {routineDay.exercises.length} ejercicios
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                triggerHaptic('medium');
+                startWorkout(routineDay.id);
+              }}
+              className="flex items-center gap-2 rounded-2xl bg-orange-500 px-4 py-3 text-xs font-black text-zinc-950 shadow-lg shadow-orange-500/20 hover:bg-orange-400 touch-press"
+            >
+              <PlayCircle className="h-5 w-5" /> Iniciar Sesión
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-zinc-800/80">
+            {routineDay.targetMuscles.map((m) => (
+              <span key={m} className="rounded-lg bg-zinc-900 px-2.5 py-1 text-[10px] font-semibold text-zinc-300 border border-zinc-800">
+                {m}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Exercises Preview List */}
+        <div className="space-y-3">
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">Ejercicios de la Sesión</h3>
+          {routineDay.exercises.map((ex, i) => (
+            <div key={ex.id} className="glass-panel flex items-center justify-between rounded-2xl p-3.5 border border-zinc-800">
+              <div className="flex items-center gap-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-zinc-900 text-xs font-bold text-orange-400 border border-zinc-800">
+                  {i + 1}
+                </span>
+                <div>
+                  <h4 className="text-sm font-extrabold text-white">{ex.name}</h4>
+                  <p className="text-[11px] text-zinc-400">
+                    {ex.defaultSets} series • Rango {ex.targetRepsRange} reps • RIR {ex.targetRir}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Active workout execution view
   return (
     <div className="space-y-6 pb-28 pt-2">
       {/* Active Workout Header */}
-      <div className="sticky top-14 z-30 glass-panel rounded-2xl border border-emerald-500/30 p-4 shadow-xl">
+      <div className="sticky top-14 z-30 glass-panel rounded-2xl border border-orange-500/40 p-4 shadow-xl shadow-orange-500/10">
         <div className="flex items-center justify-between">
           <button
             onClick={() => {
               triggerHaptic('light');
               router.push('/routines');
             }}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="text-center">
-            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">
+            <span className="text-[10px] font-black uppercase tracking-wider text-orange-400 animate-pulse">
               ENTRENAMIENTO EN VIVO
             </span>
             <h1 className="text-base font-extrabold text-white">{activeWorkout.title}</h1>
           </div>
           <button
             onClick={handleFinish}
-            className="rounded-xl bg-emerald-500 px-3.5 py-1.5 text-xs font-black text-zinc-950 shadow-md shadow-emerald-500/20 hover:bg-emerald-400 touch-press"
+            className="rounded-xl bg-orange-500 px-3.5 py-1.5 text-xs font-black text-zinc-950 shadow-md shadow-orange-500/20 hover:bg-orange-400 touch-press"
           >
             Finalizar
           </button>
@@ -102,7 +169,6 @@ export default function ActiveWorkoutPage() {
         {activeWorkout.exercises.map((item, exIndex) => {
           const { exercise, sets } = item;
 
-          // Compute historical suggestion for this exercise
           const lastLog = workoutLogs
             .filter((l) => l.exercises.some((e) => e.exerciseId === exercise.id))
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
@@ -118,15 +184,14 @@ export default function ActiveWorkoutPage() {
             >
               {/* Exercise Header & Media */}
               <div className="flex items-start gap-3">
-                {/* Image / GIF preview */}
-                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-900">
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={exercise.imageUrl} alt={exercise.name} className="h-full w-full object-cover" />
                 </div>
 
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <span className="rounded-md bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-300">
+                    <span className="rounded-md bg-zinc-900 px-2 py-0.5 text-[10px] font-bold text-zinc-300">
                       {exercise.muscleGroup}
                     </span>
                     <span className="text-[10px] text-zinc-400 font-mono">
@@ -141,10 +206,10 @@ export default function ActiveWorkoutPage() {
               </div>
 
               {/* AI Auto-Progression Recommendation Badge */}
-              <div className="flex items-center gap-2 rounded-2xl bg-emerald-500/10 p-2.5 border border-emerald-500/20">
-                <Sparkles className="h-4 w-4 shrink-0 text-emerald-400" />
+              <div className="flex items-center gap-2 rounded-2xl bg-orange-500/10 p-2.5 border border-orange-500/20">
+                <Sparkles className="h-4 w-4 shrink-0 text-orange-400" />
                 <div className="text-[11px]">
-                  <span className="font-bold text-emerald-400">Sugerencia IA: </span>
+                  <span className="font-bold text-orange-400">Sugerencia IA: </span>
                   <span className="text-zinc-200">{suggestion.message}</span>
                 </div>
               </div>
@@ -159,7 +224,7 @@ export default function ActiveWorkoutPage() {
                   {expandedNotes[exercise.id] ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                 </button>
                 {expandedNotes[exercise.id] && (
-                  <p className="mt-1.5 rounded-xl bg-zinc-900/90 p-2.5 text-xs text-zinc-300 border border-zinc-800 leading-relaxed">
+                  <p className="mt-1.5 rounded-xl bg-zinc-900 p-2.5 text-xs text-zinc-300 border border-zinc-800 leading-relaxed">
                     {exercise.technicalNotes}
                   </p>
                 )}
@@ -171,7 +236,7 @@ export default function ActiveWorkoutPage() {
                   <span className="col-span-2">SET</span>
                   <span className="col-span-3 text-center">KG</span>
                   <span className="col-span-3 text-center">REPS</span>
-                  <span className="col-span-2 text-center">RPE/RIR</span>
+                  <span className="col-span-2 text-center">RIR</span>
                   <span className="col-span-2 text-right">LISTO</span>
                 </div>
 
@@ -180,7 +245,7 @@ export default function ActiveWorkoutPage() {
                     key={set.id}
                     className={`grid grid-cols-12 items-center gap-1.5 rounded-2xl p-2.5 transition-all border ${
                       set.completed
-                        ? 'border-emerald-500/40 bg-emerald-500/10'
+                        ? 'border-orange-500/40 bg-orange-500/10'
                         : 'border-zinc-800/80 bg-zinc-900/50'
                     }`}
                   >
@@ -188,7 +253,7 @@ export default function ActiveWorkoutPage() {
                     <div className="col-span-2 flex items-center gap-1">
                       <span
                         className={`flex h-6 w-6 items-center justify-center rounded-lg text-xs font-black ${
-                          set.completed ? 'bg-emerald-500 text-zinc-950' : 'bg-zinc-800 text-zinc-300'
+                          set.completed ? 'bg-orange-500 text-zinc-950' : 'bg-zinc-800 text-zinc-300'
                         }`}
                       >
                         {set.setNumber}
@@ -204,7 +269,7 @@ export default function ActiveWorkoutPage() {
                         onChange={(e) =>
                           updateWorkoutSet(exIndex, setIndex, { weight: parseFloat(e.target.value) || 0 })
                         }
-                        className="w-full rounded-xl bg-zinc-900 border border-zinc-800 py-1.5 text-center text-sm font-black text-white focus:border-emerald-500 focus:outline-none"
+                        className="w-full rounded-xl bg-zinc-900 border border-zinc-800 py-1.5 text-center text-sm font-black text-white focus:border-orange-500 focus:outline-none"
                       />
                     </div>
 
@@ -216,7 +281,7 @@ export default function ActiveWorkoutPage() {
                         onChange={(e) =>
                           updateWorkoutSet(exIndex, setIndex, { reps: parseInt(e.target.value, 10) || 0 })
                         }
-                        className="w-full rounded-xl bg-zinc-900 border border-zinc-800 py-1.5 text-center text-sm font-black text-white focus:border-emerald-500 focus:outline-none"
+                        className="w-full rounded-xl bg-zinc-900 border border-zinc-800 py-1.5 text-center text-sm font-black text-white focus:border-orange-500 focus:outline-none"
                       />
                     </div>
 
@@ -230,7 +295,7 @@ export default function ActiveWorkoutPage() {
                         onChange={(e) =>
                           updateWorkoutSet(exIndex, setIndex, { rir: parseInt(e.target.value, 10) || 0 })
                         }
-                        className="w-full rounded-xl bg-zinc-900 border border-zinc-800 py-1.5 text-center text-xs font-bold text-zinc-300 focus:border-emerald-500 focus:outline-none"
+                        className="w-full rounded-xl bg-zinc-900 border border-zinc-800 py-1.5 text-center text-xs font-bold text-zinc-300 focus:border-orange-500 focus:outline-none"
                       />
                     </div>
 
@@ -243,7 +308,7 @@ export default function ActiveWorkoutPage() {
                         }}
                         className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all touch-press ${
                           set.completed
-                            ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
+                            ? 'bg-orange-500 text-zinc-950 shadow-md shadow-orange-500/20'
                             : 'bg-zinc-800 text-zinc-500 hover:text-white'
                         }`}
                       >

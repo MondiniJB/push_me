@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Scale, Camera, Plus, ChevronRight, SlidersHorizontal, Image as ImageIcon, Calendar } from 'lucide-react';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
+import { Camera, Plus, SlidersHorizontal } from 'lucide-react';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { triggerHaptic } from '@/lib/utils';
 import { BodyMeasurements } from '@/lib/types';
@@ -92,7 +91,7 @@ export default function MeasurementsPage() {
             triggerHaptic('light');
             setShowModal(true);
           }}
-          className="flex items-center gap-1 rounded-2xl bg-emerald-500 px-3 py-2 text-xs font-bold text-zinc-950 shadow-md shadow-emerald-500/20 hover:bg-emerald-400 touch-press"
+          className="flex items-center gap-1 rounded-2xl bg-orange-500 px-3 py-2 text-xs font-bold text-zinc-950 shadow-md shadow-orange-500/20 hover:bg-orange-400 touch-press"
         >
           <Plus className="h-4 w-4" /> Registrar
         </button>
@@ -102,18 +101,18 @@ export default function MeasurementsPage() {
       <section className="glass-panel space-y-3 rounded-3xl border border-zinc-800 p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Camera className="h-4 w-4 text-emerald-400" />
+            <Camera className="h-4 w-4 text-orange-400" />
             <h3 className="text-sm font-black text-white">Comparador de Fotos Mensuales</h3>
           </div>
           <span className="text-[10px] font-bold text-zinc-400">Arrastra para comparar</span>
         </div>
 
         {/* Interactive Split Photo Container */}
-        <div className="relative h-72 w-full overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-900 touch-none">
+        <div className="relative h-72 w-full overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 touch-none">
           {/* Background Image (After / Current) */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={photoAfter} alt="Actual" className="absolute inset-0 h-full w-full object-cover" />
-          <span className="absolute bottom-3 right-3 z-10 rounded-lg bg-zinc-950/80 px-2 py-1 text-[10px] font-extrabold text-emerald-400 border border-zinc-800">
+          <span className="absolute bottom-3 right-3 z-10 rounded-lg bg-zinc-950/80 px-2 py-1 text-[10px] font-extrabold text-orange-400 border border-zinc-800">
             Julio 2026 (Actual)
           </span>
 
@@ -139,7 +138,7 @@ export default function MeasurementsPage() {
             className="absolute bottom-0 top-0 w-1 bg-white shadow-xl cursor-ew-resize"
             style={{ left: `${sliderPosition}%` }}
           >
-            <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-zinc-950 shadow-lg">
+            <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-zinc-950 shadow-lg">
               <SlidersHorizontal className="h-4 w-4" />
             </div>
           </div>
@@ -162,7 +161,7 @@ export default function MeasurementsPage() {
         <div className="grid grid-cols-2 gap-3">
           {bodyPointList.map((item) => {
             const diff = item.val && item.prevVal ? item.val - item.prevVal : 0;
-            const diffColor = diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-blue-400' : 'text-zinc-500';
+            const diffColor = diff > 0 ? 'text-orange-400' : diff < 0 ? 'text-cyan-400' : 'text-zinc-500';
 
             return (
               <div key={item.label} className="glass-panel rounded-2xl p-3.5 border border-zinc-800 space-y-1">
@@ -183,7 +182,7 @@ export default function MeasurementsPage() {
         </div>
       </section>
 
-      {/* New Measurement Input Drawer / Modal */}
+      {/* New Measurement Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
           <div className="glass-panel w-full max-w-lg space-y-4 rounded-3xl border border-zinc-700 bg-zinc-950 p-5 max-h-[85vh] overflow-y-auto">
@@ -244,7 +243,7 @@ export default function MeasurementsPage() {
               </button>
               <button
                 onClick={handleSave}
-                className="flex-1 rounded-xl bg-emerald-500 py-3 text-xs font-black text-zinc-950"
+                className="flex-1 rounded-xl bg-orange-500 py-3 text-xs font-black text-zinc-950"
               >
                 Guardar Registro
               </button>

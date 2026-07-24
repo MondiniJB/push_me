@@ -2,18 +2,11 @@
 
 import React, { useState } from 'react';
 import {
-  Sparkles,
   HeartPulse,
   Moon,
   CheckCircle2,
   Circle,
-  Clock,
   Plus,
-  Flame,
-  Activity,
-  Zap,
-  ShieldCheck,
-  ChevronRight,
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { triggerHaptic, triggerConfetti } from '@/lib/utils';
@@ -46,7 +39,7 @@ export default function MobilityCardioPage() {
     const created: CardioLog = {
       id: `c-${Date.now()}`,
       date: new Date().toISOString().split('T')[0],
-      type: (newCardio.type as any) || 'Running',
+      type: (newCardio.type as unknown as CardioLog['type']) || 'Running',
       durationMinutes: newCardio.durationMinutes || 30,
       hrZone: newCardio.hrZone || 2,
       calories: newCardio.calories || 300,
@@ -82,7 +75,7 @@ export default function MobilityCardioPage() {
             }}
             className={`flex-1 rounded-xl py-2 text-xs font-bold transition-all ${
               activeTab === t.id
-                ? 'bg-emerald-500 text-zinc-950 shadow-md'
+                ? 'bg-orange-500 text-zinc-950 shadow-md'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
@@ -96,7 +89,7 @@ export default function MobilityCardioPage() {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">Rutina Diaria de Movilidad</h3>
-            <span className="text-xs font-bold text-emerald-400">
+            <span className="text-xs font-bold text-orange-400">
               {mobilityItems.filter((m) => m.completed).length} / {mobilityItems.length} Completados
             </span>
           </div>
@@ -111,12 +104,12 @@ export default function MobilityCardioPage() {
                   if (!item.completed) triggerConfetti();
                 }}
                 className={`glass-panel flex w-full items-center justify-between rounded-2xl p-4 border transition-all text-left touch-press ${
-                  item.completed ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-zinc-800 hover:border-zinc-700'
+                  item.completed ? 'border-orange-500/50 bg-orange-500/10' : 'border-zinc-800 hover:border-zinc-700'
                 }`}
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="rounded-md bg-zinc-800 px-2 py-0.5 text-[9px] font-bold text-amber-400 uppercase">
+                    <span className="rounded-md bg-zinc-900 px-2 py-0.5 text-[9px] font-bold text-amber-400 uppercase">
                       {item.area}
                     </span>
                     <span className="text-[11px] text-zinc-400 font-mono">{item.durationSec}s</span>
@@ -126,7 +119,7 @@ export default function MobilityCardioPage() {
                 </div>
 
                 {item.completed ? (
-                  <CheckCircle2 className="h-6 w-6 text-emerald-400 shrink-0" />
+                  <CheckCircle2 className="h-6 w-6 text-orange-400 shrink-0" />
                 ) : (
                   <Circle className="h-6 w-6 text-zinc-600 shrink-0" />
                 )}
@@ -146,7 +139,7 @@ export default function MobilityCardioPage() {
                 triggerHaptic('light');
                 setShowCardioModal(true);
               }}
-              className="flex items-center gap-1 rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-bold text-zinc-950 shadow-md shadow-emerald-500/20"
+              className="flex items-center gap-1 rounded-xl bg-orange-500 px-3 py-1.5 text-xs font-bold text-zinc-950 shadow-md shadow-orange-500/20"
             >
               <Plus className="h-4 w-4" /> Registrar Cardio
             </button>
@@ -178,7 +171,7 @@ export default function MobilityCardioPage() {
                   </div>
                   <div>
                     <span className="text-[9px] text-zinc-500">DISTANCIA</span>
-                    <p className="text-xs font-black text-emerald-400">{log.distanceKm} km</p>
+                    <p className="text-xs font-black text-orange-400">{log.distanceKm} km</p>
                   </div>
                 </div>
               </div>
@@ -200,7 +193,7 @@ export default function MobilityCardioPage() {
               <div>
                 <div className="flex justify-between text-xs font-bold text-zinc-300">
                   <span>Horas de Sueño</span>
-                  <span className="text-emerald-400">{recoveryLog.sleepHours} hrs</span>
+                  <span className="text-orange-400">{recoveryLog.sleepHours} hrs</span>
                 </div>
                 <input
                   type="range"
@@ -209,7 +202,7 @@ export default function MobilityCardioPage() {
                   step="0.5"
                   value={recoveryLog.sleepHours}
                   onChange={(e) => updateRecoveryLog({ sleepHours: Number(e.target.value) })}
-                  className="w-full text-emerald-500"
+                  className="w-full text-orange-500"
                 />
               </div>
 
@@ -266,7 +259,7 @@ export default function MobilityCardioPage() {
                 <label className="text-[10px] font-bold text-zinc-400">Tipo</label>
                 <select
                   value={newCardio.type}
-                  onChange={(e) => setNewCardio({ ...newCardio, type: e.target.value as any })}
+                  onChange={(e) => setNewCardio({ ...newCardio, type: e.target.value as unknown as CardioLog['type'] })}
                   className="w-full rounded-xl bg-zinc-900 border border-zinc-800 p-2.5 text-xs font-bold text-white"
                 >
                   <option value="Running">Running</option>
@@ -298,7 +291,7 @@ export default function MobilityCardioPage() {
               </button>
               <button
                 onClick={handleSaveCardio}
-                className="flex-1 rounded-xl bg-emerald-500 py-3 text-xs font-black text-zinc-950"
+                className="flex-1 rounded-xl bg-orange-500 py-3 text-xs font-black text-zinc-950"
               >
                 Guardar Cardio
               </button>

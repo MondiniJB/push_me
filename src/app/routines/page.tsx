@@ -10,11 +10,9 @@ import {
   Target,
   HeartPulse,
   Moon,
-  ChevronRight,
   Clock,
   Layers,
   PlayCircle,
-  PlusCircle,
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { triggerHaptic } from '@/lib/utils';
@@ -58,7 +56,6 @@ export default function RoutinesPage() {
         {routineDays.map((day) => {
           const IconComponent = dayIcons[day.id] || Dumbbell;
           const isRestDay = day.id === 'domingo';
-          const isCardioDay = day.id === 'sabado';
           const isCurrentActive = activeWorkout?.dayId === day.id;
 
           return (
@@ -66,7 +63,7 @@ export default function RoutinesPage() {
               key={day.id}
               className={`glass-panel relative overflow-hidden rounded-3xl border transition-all ${
                 isCurrentActive
-                  ? 'border-emerald-500/60 bg-emerald-500/10 shadow-xl shadow-emerald-500/10'
+                  ? 'border-orange-500/60 bg-orange-500/10 shadow-xl shadow-orange-500/10'
                   : 'border-zinc-800/90 hover:border-zinc-700'
               }`}
             >
@@ -76,16 +73,16 @@ export default function RoutinesPage() {
                     <div
                       className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
                         isCurrentActive
-                          ? 'bg-emerald-500 text-zinc-950 font-bold'
+                          ? 'bg-orange-500 text-zinc-950 font-bold'
                           : isRestDay
                           ? 'bg-zinc-800 text-zinc-400'
-                          : 'bg-zinc-800/80 text-emerald-400 border border-zinc-700/60'
+                          : 'bg-zinc-900 text-orange-400 border border-zinc-800'
                       }`}
                     >
                       <IconComponent className="h-5 w-5" />
                     </div>
                     <div>
-                      <span className="text-[10px] font-black tracking-widest text-emerald-400 uppercase">
+                      <span className="text-[10px] font-black tracking-widest text-orange-400 uppercase">
                         {dayNamesSpanish[day.id]}
                       </span>
                       <h3 className="text-lg font-extrabold text-white">{day.title}</h3>
@@ -94,7 +91,7 @@ export default function RoutinesPage() {
                   </div>
 
                   {isCurrentActive && (
-                    <span className="rounded-full bg-emerald-500/20 px-2.5 py-1 text-[10px] font-bold text-emerald-400 border border-emerald-500/30">
+                    <span className="rounded-full bg-orange-500/20 px-2.5 py-1 text-[10px] font-bold text-orange-400 border border-orange-500/30">
                       En Curso
                     </span>
                   )}
@@ -106,7 +103,7 @@ export default function RoutinesPage() {
                     {day.targetMuscles.map((muscle) => (
                       <span
                         key={muscle}
-                        className="rounded-lg bg-zinc-900/80 px-2.5 py-1 text-[10px] font-semibold text-zinc-300 border border-zinc-800"
+                        className="rounded-lg bg-zinc-900/90 px-2.5 py-1 text-[10px] font-semibold text-zinc-300 border border-zinc-800"
                       >
                         {muscle}
                       </span>
@@ -148,7 +145,7 @@ export default function RoutinesPage() {
                     <Link
                       href={`/workout/${day.id}`}
                       onClick={() => triggerHaptic('medium')}
-                      className="flex items-center gap-1.5 rounded-xl bg-emerald-500 px-3.5 py-2 text-xs font-bold text-zinc-950 shadow-md shadow-emerald-500/20 hover:bg-emerald-400 touch-press"
+                      className="flex items-center gap-1.5 rounded-xl bg-orange-500 px-3.5 py-2 text-xs font-bold text-zinc-950 shadow-md shadow-orange-500/20 hover:bg-orange-400 touch-press"
                     >
                       <PlayCircle className="h-4 w-4" /> Iniciar Día
                     </Link>
