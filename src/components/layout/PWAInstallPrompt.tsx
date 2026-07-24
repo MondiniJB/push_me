@@ -5,7 +5,7 @@ import { Download, X, Smartphone } from 'lucide-react';
 import { triggerHaptic } from '@/lib/utils';
 
 export const PWAInstallPrompt: React.FC = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<unknown>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {

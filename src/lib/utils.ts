@@ -34,7 +34,7 @@ export function triggerHaptic(type: 'light' | 'medium' | 'heavy' | 'success' = '
 export function playTimerBeep() {
   if (typeof window === 'undefined') return;
   try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
     const osc = ctx.createOscillator();
